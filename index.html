@@ -241,13 +241,18 @@
     background:var(--ink); color:#FFF7E6; padding:10px 20px; border-radius:8px;
     font-weight:700; z-index:80; display:none; box-shadow:var(--shadow); max-width:92vw; text-align:center;
   }
+  .banner{
+    background:#FBEEC8; border:2px solid var(--tape); border-radius:8px;
+    padding:10px 12px; font-size:.86rem; color:var(--ink); margin-bottom:6px; line-height:1.4;
+  }
+  .banner b{ color:var(--marker); }
+  .status-dot{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+  .status-dot.on{ background:var(--wa); }
+  .status-dot.off{ background:var(--kraft-dark); }
   @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } }
 </style>
 </head>
 <body>
-
-<!-- Datos incrustados: no editar a mano, se actualiza desde el panel de administración -->
-<script id="seed" type="application/json">{"settings":{"wa":"","title":"Venta de Garaje","subtitle":"¡Todo debe irse!","user":"admin","pass":"1234"},"products":[]}</script>
 
 <header class="hero">
   <div class="sign">
@@ -306,6 +311,17 @@
 <div class="overlay" id="adminOverlay">
   <div class="modal wide">
     <h2>Panel de administración</h2>
+
+    <div class="banner" id="repoBanner">
+      <span class="status-dot off" id="repoDot"></span>
+      <span id="repoStatus">Carpeta del repositorio no conectada.</span>
+      <br>Para guardar productos y fotos directo en tu proyecto, conectá la carpeta del repo
+      (la que contiene <b>index.html</b> y <b>datos.json</b>).
+      <div class="row-btns" style="margin-top:8px">
+        <button class="btn btn-dark" id="btnConnectRepo" type="button">📁 Conectar carpeta del repo</button>
+      </div>
+    </div>
+
     <div class="admin-grid">
 
       <section class="admin-section">
@@ -324,7 +340,7 @@
         <textarea id="pDesc" placeholder="Estado, detalles, medidas..."></textarea>
         <label for="pImg">Foto</label>
         <input type="file" id="pImg" accept="image/*">
-        <p class="field-note">La foto se comprime automáticamente para que el archivo no pese demasiado.</p>
+        <p class="field-note">La foto se comprime y se guarda como archivo en la carpeta <b>/img</b> del repo.</p>
         <img class="preview-img" id="pPreview" alt="Vista previa de la foto">
         <div class="row-btns">
           <button class="btn btn-primary" id="btnSaveProduct" type="button">Guardar producto</button>
@@ -356,18 +372,14 @@
       </section>
 
       <section class="admin-section">
-        <h3>Publicar y respaldo</h3>
+        <h3>Publicar</h3>
         <p class="field-note" style="margin-bottom:10px">
-          Los productos se guardan en este navegador. Para que otras personas los vean,
-          descargá el <b>HTML para publicar</b> (lleva los productos adentro) y subí ese archivo
-          a tu hosting o compartilo.
+          Todo se escribe en <b>datos.json</b> y en <b>/img</b> dentro de tu repo.
+          Después, en VS Code: <b>commit + push</b> y GitHub Pages se actualiza solo.
         </p>
         <div class="row-btns">
-          <button class="btn btn-primary" id="btnExportHtml" type="button">⬇ HTML para publicar</button>
-          <button class="btn btn-line" id="btnExportJson" type="button">Respaldo JSON</button>
-          <button class="btn btn-line" id="btnImportJson" type="button">Importar JSON</button>
-          <input type="file" id="importFile" accept="application/json" style="display:none">
-          <button class="btn btn-ghost" id="btnReset" type="button">Borrar todo</button>
+          <button class="btn btn-line" id="btnExportJson" type="button">Descargar copia de datos.json</button>
+          <button class="btn btn-ghost" id="btnReset" type="button">Vaciar todo</button>
         </div>
       </section>
 
@@ -384,75 +396,57 @@
 (function(){
   "use strict";
 
-  /* Plantilla limpia del documento, capturada antes de renderizar nada.
-     Se usa para generar el "HTML para publicar" con los datos incrustados. */
-  var TEMPLATE = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+  var DATA_FILE = "datos.json";
+  var IMG_DIR = "img";
+  var SESSION_KEY = "venta_garaje_admin"; // solo para recordar login en la sesión
 
-  var STORAGE_KEY = "venta_garaje_v1";
-  var data = loadData();
-  var cart = [];            // ids de productos seleccionados
-  var editingId = null;     // producto en edición
-  var pendingImg = null;    // dataURL de la foto elegida en el formulario
+  var data = { settings:{ wa:"", title:"Venta de Garaje", subtitle:"¡Todo debe irse!", user:"admin", pass:"1234" }, products:[] };
+  var cart = [];
+  var editingId = null;
+  var pendingImg = null;    // { blob, dataURL, ext } de la foto recién elegida (aún no guardada)
   var isAdmin = false;
   var ALL = "__all__";
   var OTHER = "Otros";
+  var NEW_CAT = "__new__";
   var activeCat = ALL;
 
-  function catOf(p){ return String(p.cat || "").trim() || OTHER; }
+  // Handles de la File System Access API
+  var repoHandle = null;    // carpeta del repo
+  var imgDirHandle = null;  // carpeta /img
 
-  function categories(){
-    var seen = {};
-    data.products.forEach(function(p){ seen[catOf(p)] = (seen[catOf(p)] || 0) + 1; });
-    var names = Object.keys(seen).sort(function(a,b){
-      if (a === OTHER) return 1;
-      if (b === OTHER) return -1;
-      return a.localeCompare(b, "es");
-    });
-    return names.map(function(n){ return { name:n, count:seen[n] }; });
-  }
+  var supportsFS = ("showDirectoryPicker" in window);
 
   var fmt = new Intl.NumberFormat("es-AR", { style:"currency", currency:"ARS", maximumFractionDigits:0 });
   function money(n){ return fmt.format(Number(n) || 0); }
-
-  function loadData(){
-    var seed;
-    try { seed = JSON.parse(document.getElementById("seed").textContent); }
-    catch(e){ seed = { settings:{wa:"",title:"Venta de Garaje",subtitle:"",user:"admin",pass:"1234"}, products:[] }; }
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw){
-        var saved = JSON.parse(raw);
-        if (saved && saved.settings && Array.isArray(saved.products)) return saved;
-      }
-    } catch(e){ /* localStorage no disponible: se usa el seed */ }
-    return seed;
-  }
-
-  function saveData(){
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      return true;
-    } catch(e){
-      toast("No se pudo guardar: se llenó el espacio del navegador. Probá con fotos más chicas o exportá un respaldo.");
-      return false;
-    }
-  }
-
   function esc(s){
     return String(s == null ? "" : s)
       .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
       .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
   }
-
+  function uid(){ return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
   function toast(msg){
     var t = document.getElementById("toast");
-    t.textContent = msg;
-    t.style.display = "block";
-    clearTimeout(t._h);
-    t._h = setTimeout(function(){ t.style.display = "none"; }, 3200);
+    t.textContent = msg; t.style.display = "block";
+    clearTimeout(t._h); t._h = setTimeout(function(){ t.style.display = "none"; }, 3400);
+  }
+  function catOf(p){ return String(p.cat || "").trim() || OTHER; }
+  function categories(){
+    var seen = {};
+    data.products.forEach(function(p){ seen[catOf(p)] = (seen[catOf(p)] || 0) + 1; });
+    return Object.keys(seen).sort(function(a,b){
+      if (a === OTHER) return 1; if (b === OTHER) return -1;
+      return a.localeCompare(b, "es");
+    }).map(function(n){ return { name:n, count:seen[n] }; });
   }
 
-  function uid(){ return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  /* ---------- Carga inicial: lee datos.json ---------- */
+  function boot(){
+    fetch(DATA_FILE + "?v=" + Date.now())
+      .then(function(r){ if (!r.ok) throw new Error("no datos.json"); return r.json(); })
+      .then(function(d){ if (d && d.settings && Array.isArray(d.products)) data = d; })
+      .catch(function(){ /* sin datos.json todavía: se usan los valores por defecto */ })
+      .then(function(){ renderAll(); });
+  }
 
   /* ---------- Render público ---------- */
   function renderHeader(){
@@ -460,7 +454,11 @@
     document.getElementById("saleSubtitle").textContent = data.settings.subtitle || "";
     document.title = data.settings.title || "Venta de Garaje";
   }
-
+  function imgSrc(p){
+    if (!p.img) return null;
+    // dataURL (foto recién agregada, aún no guardada) o ruta relativa a /img
+    return p.img.indexOf("data:") === 0 ? p.img : (IMG_DIR + "/" + p.img);
+  }
   function renderFilters(){
     var box = document.getElementById("filters");
     var cats = categories();
@@ -472,108 +470,144 @@
     });
     box.innerHTML = chips.join("");
   }
-
   function renderCatalog(){
     var box = document.getElementById("catalog");
     if (!data.products.length){
       box.innerHTML = '<div class="empty-state"><span>Todavía no hay productos</span>Entrá a “Administración” (abajo) para cargar los primeros.</div>';
       return;
     }
-    var visible = activeCat === ALL
-      ? data.products
-      : data.products.filter(function(p){ return catOf(p) === activeCat; });
+    var visible = activeCat === ALL ? data.products : data.products.filter(function(p){ return catOf(p) === activeCat; });
     if (!visible.length){
       box.innerHTML = '<div class="empty-state"><span>Nada por acá</span>No quedan productos en esta categoría.</div>';
       return;
     }
     box.innerHTML = visible.map(function(p){
       var inCart = cart.indexOf(p.id) !== -1;
-      var img = p.img
-        ? '<img class="photo" src="' + p.img + '" alt="' + esc(p.name) + '">'
-        : '<div class="photo-empty">sin foto</div>';
+      var src = imgSrc(p);
+      var img = src ? '<img class="photo" src="' + esc(src) + '" alt="' + esc(p.name) + '">' : '<div class="photo-empty">sin foto</div>';
       var btn = p.sold
         ? '<button class="btn btn-add" disabled>Vendido</button>'
-        : '<button class="btn btn-add' + (inCart ? " in-cart" : "") + '" data-toggle="' + p.id + '">' +
-            (inCart ? "✓ En tu lista" : "Me interesa") + '</button>';
-      return '<article class="card' + (p.sold ? " sold" : "") + '">' +
-        img +
+        : '<button class="btn btn-add' + (inCart ? " in-cart" : "") + '" data-toggle="' + p.id + '">' + (inCart ? "✓ En tu lista" : "Me interesa") + '</button>';
+      return '<article class="card' + (p.sold ? " sold" : "") + '">' + img +
         (p.sold ? '<div class="sold-stamp">VENDIDO</div>' : "") +
         '<div class="price-tag">' + money(p.price) + '</div>' +
-        '<h3>' + esc(p.name) + '</h3>' +
-        '<p class="desc">' + esc(p.desc) + '</p>' +
-        btn +
-      '</article>';
+        '<h3>' + esc(p.name) + '</h3><p class="desc">' + esc(p.desc) + '</p>' + btn + '</article>';
     }).join("");
   }
-
-  function cartProducts(){
-    return cart.map(function(id){
-      return data.products.find(function(p){ return p.id === id; });
-    }).filter(Boolean);
-  }
-
-  function cartTotal(){
-    return cartProducts().reduce(function(s,p){ return s + (Number(p.price)||0); }, 0);
-  }
-
+  function cartProducts(){ return cart.map(function(id){ return data.products.find(function(p){ return p.id === id; }); }).filter(Boolean); }
+  function cartTotal(){ return cartProducts().reduce(function(s,p){ return s + (Number(p.price)||0); }, 0); }
   function renderCartBar(){
-    var bar = document.getElementById("cartbar");
-    var items = cartProducts();
+    var bar = document.getElementById("cartbar"); var items = cartProducts();
     if (!items.length){ bar.classList.remove("visible"); return; }
     bar.classList.add("visible");
-    document.getElementById("cartCount").textContent =
-      items.length === 1 ? "1 producto en tu lista" : items.length + " productos en tu lista";
+    document.getElementById("cartCount").textContent = items.length === 1 ? "1 producto en tu lista" : items.length + " productos en tu lista";
     document.getElementById("cartTotalBar").textContent = "Total: " + money(cartTotal());
   }
-
   function renderCartModal(){
-    var list = document.getElementById("cartList");
-    list.innerHTML = cartProducts().map(function(p){
-      return '<li><span class="n">' + esc(p.name) + '</span>' +
-        '<span class="p">' + money(p.price) + '</span>' +
+    document.getElementById("cartList").innerHTML = cartProducts().map(function(p){
+      return '<li><span class="n">' + esc(p.name) + '</span><span class="p">' + money(p.price) + '</span>' +
         '<button data-remove="' + p.id + '" title="Quitar" aria-label="Quitar ' + esc(p.name) + '">✕</button></li>';
     }).join("");
     document.getElementById("cartTotalModal").textContent = money(cartTotal());
   }
-
   function toggleCart(id){
     var i = cart.indexOf(id);
     if (i === -1) cart.push(id); else cart.splice(i,1);
     renderCatalog(); renderCartBar(); renderCartModal();
   }
-
   function sendWhatsApp(){
-    var items = cartProducts();
-    if (!items.length) return;
-    if (!data.settings.wa){
-      toast("Falta configurar el número de WhatsApp en el panel de administración.");
-      return;
-    }
+    var items = cartProducts(); if (!items.length) return;
+    if (!data.settings.wa){ toast("Falta configurar el número de WhatsApp."); return; }
     var lines = ["¡Hola! Me interesan estos productos de la " + (data.settings.title || "venta de garaje") + ":", ""];
     items.forEach(function(p){ lines.push("• " + p.name + " — " + money(p.price)); });
     lines.push("", "Total: " + money(cartTotal()), "¿Siguen disponibles?");
-    var url = "https://wa.me/" + data.settings.wa.replace(/\D/g,"") + "?text=" + encodeURIComponent(lines.join("\n"));
-    window.open(url, "_blank");
+    window.open("https://wa.me/" + data.settings.wa.replace(/\D/g,"") + "?text=" + encodeURIComponent(lines.join("\n")), "_blank");
   }
 
-  /* ---------- Admin ---------- */
-  function renderAdminList(){
-    var list = document.getElementById("adminList");
-    if (!data.products.length){
-      list.innerHTML = '<li style="border:none;color:var(--ink-soft)">Sin productos todavía.</li>';
+  /* ---------- File System Access: carpeta del repo ---------- */
+  function updateRepoBanner(){
+    var dot = document.getElementById("repoDot");
+    var st = document.getElementById("repoStatus");
+    var btn = document.getElementById("btnConnectRepo");
+    if (!supportsFS){
+      dot.className = "status-dot off";
+      st.innerHTML = "Este navegador no permite guardar en carpetas. Usá <b>Chrome</b> o <b>Edge</b> para el modo automático, o descargá el datos.json a mano.";
+      btn.style.display = "none";
       return;
     }
+    if (repoHandle){
+      dot.className = "status-dot on";
+      st.innerHTML = "Carpeta conectada: <b>" + esc(repoHandle.name) + "</b>. Los cambios se escriben ahí automáticamente.";
+      btn.textContent = "📁 Cambiar carpeta";
+    } else {
+      dot.className = "status-dot off";
+      st.innerHTML = "Carpeta del repositorio no conectada.";
+      btn.textContent = "📁 Conectar carpeta del repo";
+    }
+  }
+
+  function connectRepo(){
+    if (!supportsFS){ toast("Tu navegador no soporta esto. Usá Chrome o Edge."); return; }
+    window.showDirectoryPicker({ mode:"readwrite" }).then(function(handle){
+      repoHandle = handle;
+      return handle.getDirectoryHandle(IMG_DIR, { create:true });
+    }).then(function(imgHandle){
+      imgDirHandle = imgHandle;
+      // Intenta cargar el datos.json que esté en la carpeta elegida
+      return repoHandle.getFileHandle(DATA_FILE, { create:false })
+        .then(function(fh){ return fh.getFile(); })
+        .then(function(file){ return file.text(); })
+        .then(function(txt){
+          try { var d = JSON.parse(txt); if (d && d.settings && Array.isArray(d.products)) data = d; } catch(e){}
+        })
+        .catch(function(){ /* no había datos.json en la carpeta, se conserva el actual */ });
+    }).then(function(){
+      updateRepoBanner();
+      renderAll();
+      toast("Carpeta conectada. Ahora los cambios se guardan solos.");
+    }).catch(function(err){
+      if (err && err.name === "AbortError") return; // el usuario canceló
+      toast("No se pudo conectar la carpeta.");
+    });
+  }
+
+  // Escribe un blob como archivo dentro de /img y devuelve el nombre de archivo
+  function writeImage(blob, ext){
+    var fname = "img_" + Date.now().toString(36) + Math.random().toString(36).slice(2,6) + "." + ext;
+    return imgDirHandle.getFileHandle(fname, { create:true })
+      .then(function(fh){ return fh.createWritable(); })
+      .then(function(w){ return w.write(blob).then(function(){ return w.close(); }); })
+      .then(function(){ return fname; });
+  }
+
+  function deleteImage(fname){
+    if (!imgDirHandle || !fname || fname.indexOf("data:") === 0) return Promise.resolve();
+    return imgDirHandle.removeEntry(fname).catch(function(){ /* ya no existe */ });
+  }
+
+  // Escribe el datos.json en la carpeta del repo
+  function writeDataFile(){
+    if (!repoHandle) return Promise.resolve(false);
+    return repoHandle.getFileHandle(DATA_FILE, { create:true })
+      .then(function(fh){ return fh.createWritable(); })
+      .then(function(w){ return w.write(JSON.stringify(data, null, 2)).then(function(){ return w.close(); }); })
+      .then(function(){ return true; });
+  }
+
+  /* ---------- Admin: render ---------- */
+  function renderAdminList(){
+    var list = document.getElementById("adminList");
+    if (!data.products.length){ list.innerHTML = '<li style="border:none;color:var(--ink-soft)">Sin productos todavía.</li>'; return; }
     list.innerHTML = data.products.map(function(p){
-      var thumb = p.img ? '<img src="' + p.img + '" alt="">' : '<span class="thumb-empty"></span>';
+      var src = imgSrc(p);
+      var thumb = src ? '<img src="' + esc(src) + '" alt="">' : '<span class="thumb-empty"></span>';
       return '<li>' + thumb +
         '<span class="info"><b>' + esc(p.name) + '</b><small>' + money(p.price) + ' · ' + esc(catOf(p)) + (p.sold ? " · VENDIDO" : "") + '</small></span>' +
         '<button class="icon-btn" data-sold="' + p.id + '" title="Marcar vendido / disponible">' + (p.sold ? "↩️" : "🏷️") + '</button>' +
         '<button class="icon-btn" data-edit="' + p.id + '" title="Editar">✏️</button>' +
-        '<button class="icon-btn" data-del="' + p.id + '" title="Eliminar">🗑️</button>' +
-      '</li>';
+        '<button class="icon-btn" data-del="' + p.id + '" title="Eliminar">🗑️</button></li>';
     }).join("");
   }
-
   function fillSettingsForm(){
     document.getElementById("cfgWa").value = data.settings.wa || "";
     document.getElementById("cfgTitle").value = data.settings.title || "";
@@ -581,32 +615,22 @@
     document.getElementById("cfgUser").value = data.settings.user || "";
     document.getElementById("cfgPass").value = data.settings.pass || "";
   }
-
-  var NEW_CAT = "__new__";
-
   function renderCatOptions(selected){
     var sel = document.getElementById("pCatSel");
     var current = selected !== undefined ? selected : sel.value;
     var opts = ['<option value="">Sin categoría</option>'];
-    categories().forEach(function(c){
-      if (c.name === OTHER) return;
-      opts.push('<option value="' + esc(c.name) + '">' + esc(c.name) + '</option>');
-    });
+    categories().forEach(function(c){ if (c.name !== OTHER) opts.push('<option value="' + esc(c.name) + '">' + esc(c.name) + '</option>'); });
     opts.push('<option value="' + NEW_CAT + '">➕ Nueva categoría…</option>');
-    sel.innerHTML = opts.join("");
-    sel.value = current;
-    if (sel.value !== current) sel.value = ""; // la opción ya no existe
+    sel.innerHTML = opts.join(""); sel.value = current;
+    if (sel.value !== current) sel.value = "";
     toggleNewCatInput();
   }
-
   function toggleNewCatInput(){
     var isNew = document.getElementById("pCatSel").value === NEW_CAT;
     var input = document.getElementById("pCatNew");
     input.style.display = isNew ? "block" : "none";
-    if (isNew) input.focus();
-    else input.value = "";
+    if (isNew) input.focus(); else input.value = "";
   }
-
   function resetProductForm(){
     editingId = null; pendingImg = null;
     document.getElementById("formTitle").textContent = "Nuevo producto";
@@ -615,71 +639,40 @@
     renderCatOptions("");
     document.getElementById("pDesc").value = "";
     document.getElementById("pImg").value = "";
-    var pv = document.getElementById("pPreview");
-    pv.style.display = "none"; pv.src = "";
+    var pv = document.getElementById("pPreview"); pv.style.display = "none"; pv.src = "";
     document.getElementById("btnCancelEdit").style.display = "none";
   }
-
   function startEdit(id){
     var p = data.products.find(function(x){ return x.id === id; });
     if (!p) return;
-    editingId = id; pendingImg = p.img || null;
+    editingId = id; pendingImg = null;
     document.getElementById("formTitle").textContent = "Editar producto";
     document.getElementById("pName").value = p.name;
     document.getElementById("pPrice").value = p.price;
     renderCatOptions((p.cat || "").trim());
     document.getElementById("pDesc").value = p.desc || "";
     var pv = document.getElementById("pPreview");
-    if (p.img){ pv.src = p.img; pv.style.display = "block"; } else { pv.style.display = "none"; }
+    var src = imgSrc(p);
+    if (src){ pv.src = src; pv.style.display = "block"; } else { pv.style.display = "none"; }
     document.getElementById("btnCancelEdit").style.display = "inline-block";
   }
 
-  function saveProduct(){
-    var name = document.getElementById("pName").value.trim();
-    var price = parseFloat(document.getElementById("pPrice").value);
-    var selVal = document.getElementById("pCatSel").value;
-    var cat = selVal === NEW_CAT
-      ? document.getElementById("pCatNew").value.trim().replace(/\s+/g, " ")
-      : selVal;
-    if (selVal === NEW_CAT && !cat){ toast("Escribí el nombre de la nueva categoría."); return; }
-    if (cat){
-      var match = categories().find(function(c){ return c.name.toLowerCase() === cat.toLowerCase(); });
-      if (match) cat = match.name; // reutiliza la escritura existente ("ropa" -> "Ropa")
-    }
-    var desc = document.getElementById("pDesc").value.trim();
-    if (!name){ toast("Poné un nombre para el producto."); return; }
-    if (isNaN(price) || price < 0){ toast("Poné un precio válido."); return; }
-    if (editingId){
-      var p = data.products.find(function(x){ return x.id === editingId; });
-      if (p){ p.name = name; p.price = price; p.cat = cat; p.desc = desc; p.img = pendingImg; }
-    } else {
-      data.products.push({ id: uid(), name: name, price: price, cat: cat, desc: desc, img: pendingImg, sold: false });
-    }
-    if (saveData()) toast(editingId ? "Producto actualizado." : "Producto agregado.");
-    resetProductForm();
-    renderFilters(); renderCatOptions();
-    renderCatalog(); renderAdminList(); renderCartBar();
-  }
-
-  /* Comprime la foto con canvas para que quepa en localStorage */
+  // Comprime la foto elegida a JPEG y la guarda en memoria (blob) hasta que se guarde el producto
   function handleImageFile(file){
     if (!file) return;
     var reader = new FileReader();
     reader.onload = function(){
       var img = new Image();
       img.onload = function(){
-        var MAX = 800;
-        var w = img.width, h = img.height;
-        if (w > MAX || h > MAX){
-          if (w >= h){ h = Math.round(h * MAX / w); w = MAX; }
-          else { w = Math.round(w * MAX / h); h = MAX; }
-        }
-        var c = document.createElement("canvas");
-        c.width = w; c.height = h;
+        var MAX = 900, w = img.width, h = img.height;
+        if (w > MAX || h > MAX){ if (w >= h){ h = Math.round(h*MAX/w); w = MAX; } else { w = Math.round(w*MAX/h); h = MAX; } }
+        var c = document.createElement("canvas"); c.width = w; c.height = h;
         c.getContext("2d").drawImage(img, 0, 0, w, h);
-        pendingImg = c.toDataURL("image/jpeg", 0.72);
-        var pv = document.getElementById("pPreview");
-        pv.src = pendingImg; pv.style.display = "block";
+        c.toBlob(function(blob){
+          pendingImg = { blob: blob, dataURL: c.toDataURL("image/jpeg", 0.72), ext: "jpg" };
+          var pv = document.getElementById("pPreview");
+          pv.src = pendingImg.dataURL; pv.style.display = "block";
+        }, "image/jpeg", 0.72);
       };
       img.onerror = function(){ toast("No se pudo leer la imagen."); };
       img.src = reader.result;
@@ -687,42 +680,52 @@
     reader.readAsDataURL(file);
   }
 
-  /* ---------- Exportar / importar ---------- */
-  function download(filename, content, mime){
-    var blob = new Blob([content], { type: mime });
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
-  }
+  function saveProduct(){
+    var name = document.getElementById("pName").value.trim();
+    var price = parseFloat(document.getElementById("pPrice").value);
+    var selVal = document.getElementById("pCatSel").value;
+    var cat = selVal === NEW_CAT ? document.getElementById("pCatNew").value.trim().replace(/\s+/g," ") : selVal;
+    if (selVal === NEW_CAT && !cat){ toast("Escribí el nombre de la nueva categoría."); return; }
+    if (cat){ var m = categories().find(function(c){ return c.name.toLowerCase() === cat.toLowerCase(); }); if (m) cat = m.name; }
+    var desc = document.getElementById("pDesc").value.trim();
+    if (!name){ toast("Poné un nombre para el producto."); return; }
+    if (isNaN(price) || price < 0){ toast("Poné un precio válido."); return; }
 
-  function exportHtml(){
-    var json = JSON.stringify(data).replace(/</g, "\\u003c");
-    var seedRe = new RegExp("(<scr" + "ipt id=\"seed\"[^>]*>)[\\s\\S]*?(<\\/scr" + "ipt>)");
-    var out = TEMPLATE.replace(seedRe, function(_, open, close){ return open + json + close; });
-    download("venta-garaje-publicar.html", out, "text/html");
-    toast("Listo: subí ese archivo a tu hosting o compartilo.");
+    if (!repoHandle){
+      toast("Primero conectá la carpeta del repo (arriba) para poder guardar.");
+      return;
+    }
+
+    // Resuelve la foto: si hay una nueva, la escribe en /img; si no, conserva la anterior
+    var imgReady;
+    if (pendingImg){
+      imgReady = writeImage(pendingImg.blob, pendingImg.ext);
+    } else {
+      imgReady = Promise.resolve(editingId ? (data.products.find(function(x){ return x.id === editingId; }) || {}).img : null);
+    }
+
+    imgReady.then(function(imgName){
+      if (editingId){
+        var p = data.products.find(function(x){ return x.id === editingId; });
+        // si cambió la foto, borra la anterior
+        if (p && pendingImg && p.img && p.img !== imgName) deleteImage(p.img);
+        if (p){ p.name = name; p.price = price; p.cat = cat; p.desc = desc; p.img = imgName; }
+      } else {
+        data.products.push({ id: uid(), name: name, price: price, cat: cat, desc: desc, img: imgName || null, sold: false });
+      }
+      return writeDataFile();
+    }).then(function(){
+      toast(editingId ? "Producto actualizado y guardado." : "Producto agregado y guardado.");
+      resetProductForm();
+      renderFilters(); renderCatOptions(); renderCatalog(); renderAdminList(); renderCartBar();
+    }).catch(function(){ toast("Hubo un problema al escribir en la carpeta."); });
   }
 
   function exportJson(){
-    download("venta-garaje-respaldo.json", JSON.stringify(data, null, 2), "application/json");
-  }
-
-  function importJson(file){
-    var reader = new FileReader();
-    reader.onload = function(){
-      try {
-        var d = JSON.parse(reader.result);
-        if (!d.settings || !Array.isArray(d.products)) throw new Error("formato");
-        data = d;
-        saveData();
-        renderAll();
-        toast("Respaldo importado.");
-      } catch(e){ toast("El archivo no es un respaldo válido."); }
-    };
-    reader.readAsText(file);
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type:"application/json" });
+    var a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    a.download = DATA_FILE; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
   }
 
   /* ---------- Modales ---------- */
@@ -731,64 +734,46 @@
 
   function renderAll(){
     renderHeader(); renderFilters(); renderCatalog(); renderCartBar(); renderCartModal();
-    renderAdminList(); renderCatOptions(); fillSettingsForm();
+    renderAdminList(); renderCatOptions(); fillSettingsForm(); updateRepoBanner();
   }
 
   /* ---------- Eventos ---------- */
   document.getElementById("filters").addEventListener("click", function(e){
-    var b = e.target.closest("[data-cat]");
-    if (!b) return;
-    activeCat = b.getAttribute("data-cat");
-    renderFilters(); renderCatalog();
+    var b = e.target.closest("[data-cat]"); if (!b) return;
+    activeCat = b.getAttribute("data-cat"); renderFilters(); renderCatalog();
   });
-
   document.getElementById("catalog").addEventListener("click", function(e){
-    var b = e.target.closest("[data-toggle]");
-    if (b) toggleCart(b.getAttribute("data-toggle"));
+    var b = e.target.closest("[data-toggle]"); if (b) toggleCart(b.getAttribute("data-toggle"));
   });
-
-  document.getElementById("btnViewCart").addEventListener("click", function(){
-    renderCartModal(); open("cartOverlay");
-  });
+  document.getElementById("btnViewCart").addEventListener("click", function(){ renderCartModal(); open("cartOverlay"); });
   document.getElementById("btnSendWa").addEventListener("click", sendWhatsApp);
   document.getElementById("btnSendWa2").addEventListener("click", sendWhatsApp);
-
   document.getElementById("cartList").addEventListener("click", function(e){
     var b = e.target.closest("[data-remove]");
-    if (b){
-      toggleCart(b.getAttribute("data-remove"));
-      if (!cart.length) close("cartOverlay");
-    }
+    if (b){ toggleCart(b.getAttribute("data-remove")); if (!cart.length) close("cartOverlay"); }
   });
 
   document.getElementById("adminLink").addEventListener("click", function(){
-    if (isAdmin){ renderAdminList(); fillSettingsForm(); open("adminOverlay"); }
+    if (isAdmin){ renderAdminList(); fillSettingsForm(); updateRepoBanner(); open("adminOverlay"); }
     else {
       document.getElementById("loginUser").value = "";
       document.getElementById("loginPass").value = "";
-      open("loginOverlay");
-      document.getElementById("loginUser").focus();
+      open("loginOverlay"); document.getElementById("loginUser").focus();
     }
   });
-
   function tryLogin(){
     var u = document.getElementById("loginUser").value.trim();
     var p = document.getElementById("loginPass").value;
     if (u === (data.settings.user || "admin") && p === (data.settings.pass || "1234")){
-      isAdmin = true;
-      close("loginOverlay");
-      renderAdminList(); fillSettingsForm(); resetProductForm();
-      open("adminOverlay");
-    } else {
-      toast("Usuario o contraseña incorrectos.");
-    }
+      isAdmin = true; close("loginOverlay");
+      renderAdminList(); fillSettingsForm(); resetProductForm(); updateRepoBanner(); open("adminOverlay");
+    } else { toast("Usuario o contraseña incorrectos."); }
   }
   document.getElementById("btnLogin").addEventListener("click", tryLogin);
   document.getElementById("loginPass").addEventListener("keydown", function(e){ if (e.key === "Enter") tryLogin(); });
 
-  document.getElementById("pImg").addEventListener("change", function(e){
-    handleImageFile(e.target.files[0]);
-  });
+  document.getElementById("btnConnectRepo").addEventListener("click", connectRepo);
+  document.getElementById("pImg").addEventListener("change", function(e){ handleImageFile(e.target.files[0]); });
   document.getElementById("pCatSel").addEventListener("change", toggleNewCatInput);
   document.getElementById("btnSaveProduct").addEventListener("click", saveProduct);
   document.getElementById("btnCancelEdit").addEventListener("click", resetProductForm);
@@ -800,18 +785,24 @@
       var id = b.getAttribute("data-del");
       var p = data.products.find(function(x){ return x.id === id; });
       if (p && confirm('¿Eliminar "' + p.name + '"?')){
-        data.products = data.products.filter(function(x){ return x.id !== id; });
-        cart = cart.filter(function(c){ return c !== id; });
-        saveData(); renderAll();
+        if (!repoHandle){ toast("Conectá la carpeta del repo para guardar los cambios."); return; }
+        deleteImage(p.img).then(function(){
+          data.products = data.products.filter(function(x){ return x.id !== id; });
+          cart = cart.filter(function(c){ return c !== id; });
+          return writeDataFile();
+        }).then(function(){ renderAll(); toast("Producto eliminado y guardado."); });
       }
     }
     else if ((b = e.target.closest("[data-sold]"))){
+      if (!repoHandle){ toast("Conectá la carpeta del repo para guardar los cambios."); return; }
       var p2 = data.products.find(function(x){ return x.id === b.getAttribute("data-sold"); });
-      if (p2){ p2.sold = !p2.sold; cart = cart.filter(function(c){ return c !== p2.id; }); saveData(); renderAll(); }
+      if (p2){ p2.sold = !p2.sold; cart = cart.filter(function(c){ return c !== p2.id; });
+        writeDataFile().then(function(){ renderAll(); toast("Guardado."); }); }
     }
   });
 
   document.getElementById("btnSaveCfg").addEventListener("click", function(){
+    if (!repoHandle){ toast("Conectá la carpeta del repo para guardar los cambios."); return; }
     data.settings.wa = document.getElementById("cfgWa").value.replace(/\D/g,"");
     data.settings.title = document.getElementById("cfgTitle").value.trim() || "Venta de Garaje";
     data.settings.subtitle = document.getElementById("cfgSubtitle").value.trim();
@@ -819,37 +810,23 @@
     var p = document.getElementById("cfgPass").value;
     if (u) data.settings.user = u;
     if (p) data.settings.pass = p;
-    if (saveData()) toast("Configuración guardada.");
-    renderHeader();
+    writeDataFile().then(function(){ renderHeader(); toast("Configuración guardada."); });
   });
 
-  document.getElementById("btnExportHtml").addEventListener("click", exportHtml);
   document.getElementById("btnExportJson").addEventListener("click", exportJson);
-  document.getElementById("btnImportJson").addEventListener("click", function(){
-    document.getElementById("importFile").click();
-  });
-  document.getElementById("importFile").addEventListener("change", function(e){
-    if (e.target.files[0]) importJson(e.target.files[0]);
-    e.target.value = "";
-  });
   document.getElementById("btnReset").addEventListener("click", function(){
-    if (confirm("¿Borrar todos los productos y la configuración de este navegador?")){
-      try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
-      location.reload();
-    }
+    if (!confirm("¿Vaciar todos los productos? (las fotos en /img no se borran)")) return;
+    if (!repoHandle){ toast("Conectá la carpeta del repo para guardar los cambios."); return; }
+    data.products = [];
+    writeDataFile().then(function(){ renderAll(); toast("Catálogo vaciado y guardado."); });
   });
 
-  // Cerrar modales
   document.querySelectorAll(".overlay").forEach(function(ov){
-    ov.addEventListener("click", function(e){
-      if (e.target === ov || e.target.closest("[data-close]")) ov.classList.remove("open");
-    });
+    ov.addEventListener("click", function(e){ if (e.target === ov || e.target.closest("[data-close]")) ov.classList.remove("open"); });
   });
-  document.addEventListener("keydown", function(e){
-    if (e.key === "Escape") document.querySelectorAll(".overlay.open").forEach(function(o){ o.classList.remove("open"); });
-  });
+  document.addEventListener("keydown", function(e){ if (e.key === "Escape") document.querySelectorAll(".overlay.open").forEach(function(o){ o.classList.remove("open"); }); });
 
-  renderAll();
+  boot();
 })();
 </script>
 </body>
