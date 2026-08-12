@@ -546,11 +546,23 @@
     }
   }
 
+  // Pide/verifica permiso de escritura sobre un handle; devuelve true si quedó concedido
+  function ensureWrite(handle){
+    if (!handle.queryPermission) return Promise.resolve(true);
+    return handle.queryPermission({ mode:"readwrite" }).then(function(state){
+      if (state === "granted") return true;
+      return handle.requestPermission({ mode:"readwrite" }).then(function(s){ return s === "granted"; });
+    });
+  }
+
   function connectRepo(){
     if (!supportsFS){ toast("Tu navegador no soporta esto. Usá Chrome o Edge."); return; }
     window.showDirectoryPicker({ mode:"readwrite" }).then(function(handle){
       repoHandle = handle;
-      return handle.getDirectoryHandle(IMG_DIR, { create:true });
+      return ensureWrite(handle).then(function(ok){
+        if (!ok) throw new Error("sin-permiso");
+        return handle.getDirectoryHandle(IMG_DIR, { create:true });
+      });
     }).then(function(imgHandle){
       imgDirHandle = imgHandle;
       // Intenta cargar el datos.json que esté en la carpeta elegida
@@ -567,6 +579,12 @@
       toast("Carpeta conectada. Ahora los cambios se guardan solos.");
     }).catch(function(err){
       if (err && err.name === "AbortError") return; // el usuario canceló
+      if (err && err.message === "sin-permiso"){
+        repoHandle = null;
+        toast("Chrome no dio permiso de edición. Volvé a conectar y elegí “Editar archivos”.");
+        updateRepoBanner();
+        return;
+      }
       toast("No se pudo conectar la carpeta.");
     });
   }
@@ -718,7 +736,10 @@
       toast(editingId ? "Producto actualizado y guardado." : "Producto agregado y guardado.");
       resetProductForm();
       renderFilters(); renderCatOptions(); renderCatalog(); renderAdminList(); renderCartBar();
-    }).catch(function(){ toast("Hubo un problema al escribir en la carpeta."); });
+    }).catch(function(err){
+      console.error("Error al guardar:", err);
+      toast("No se pudo guardar: " + (err && err.name ? err.name : "error") + ". Reconectá la carpeta y probá de nuevo.");
+    });
   }
 
   function exportJson(){
