@@ -589,13 +589,11 @@
     });
   }
 
-  // Escribe un blob como archivo dentro de /img y devuelve el nombre de archivo
-  function writeImage(blob, ext){
-    var fname = "img_" + Date.now().toString(36) + Math.random().toString(36).slice(2,6) + "." + ext;
+  // Escribe un blob como archivo dentro de /img con el nombre indicado
+  function writeImage(fname, blob){
     return imgDirHandle.getFileHandle(fname, { create:true })
       .then(function(fh){ return fh.createWritable(); })
-      .then(function(w){ return w.write(blob).then(function(){ return w.close(); }); })
-      .then(function(){ return fname; });
+      .then(function(w){ return w.write(blob).then(function(){ return w.close(); }); });
   }
 
   function deleteImage(fname){
@@ -714,24 +712,26 @@
       return;
     }
 
-    // Resuelve la foto: si hay una nueva, la escribe en /img; si no, conserva la anterior
-    var imgReady;
-    if (pendingImg){
-      imgReady = writeImage(pendingImg.blob, pendingImg.ext);
+    // Nombre de la foto: si hay una nueva, se genera antes de escribirla; si no, conserva la anterior
+    var oldImg = editingId ? (data.products.find(function(x){ return x.id === editingId; }) || {}).img : null;
+    var imgName = pendingImg
+      ? ("img_" + Date.now().toString(36) + Math.random().toString(36).slice(2,6) + "." + pendingImg.ext)
+      : oldImg;
+
+    if (editingId){
+      var p = data.products.find(function(x){ return x.id === editingId; });
+      if (p){ p.name = name; p.price = price; p.cat = cat; p.desc = desc; p.img = imgName || null; }
     } else {
-      imgReady = Promise.resolve(editingId ? (data.products.find(function(x){ return x.id === editingId; }) || {}).img : null);
+      data.products.push({ id: uid(), name: name, price: price, cat: cat, desc: desc, img: imgName || null, sold: false });
     }
 
-    imgReady.then(function(imgName){
-      if (editingId){
-        var p = data.products.find(function(x){ return x.id === editingId; });
-        // si cambió la foto, borra la anterior
-        if (p && pendingImg && p.img && p.img !== imgName) deleteImage(p.img);
-        if (p){ p.name = name; p.price = price; p.cat = cat; p.desc = desc; p.img = imgName; }
-      } else {
-        data.products.push({ id: uid(), name: name, price: price, cat: cat, desc: desc, img: imgName || null, sold: false });
-      }
-      return writeDataFile();
+    // Guarda primero datos.json: así el producto queda persistido aunque
+    // la escritura de la foto (siguiente paso) se vea interrumpida.
+    writeDataFile().then(function(){
+      if (!pendingImg) return null;
+      return writeImage(imgName, pendingImg.blob).then(function(){
+        if (oldImg && oldImg !== imgName) return deleteImage(oldImg);
+      });
     }).then(function(){
       toast(editingId ? "Producto actualizado y guardado." : "Producto agregado y guardado.");
       resetProductForm();

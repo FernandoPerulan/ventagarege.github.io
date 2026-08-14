@@ -8,12 +8,21 @@
   },
   "products": [
     {
-      "id": "pmsqgk68hnagse",
-      "name": "TEST",
-      "price": 3000,
-      "cat": "",
-      "desc": "",
-      "img": null,
+      "id": "pmstbrp2m9hmoo",
+      "name": "Velador 3D Boca JUNIORS + Foco",
+      "price": 40000,
+      "cat": "Lamparas",
+      "desc": "Velador 3D Boca JUNIORS + Foco con cable largo e interruptor. Nuevo. Excelente diseño.",
+      "img": "img_mstbrp2mozhl.jpg",
+      "sold": false
+    },
+    {
+      "id": "pmstbuvnhjzrqp",
+      "name": "Cuadro Moto Picadas REPUESTO Zanella rx150",
+      "price": 50000,
+      "cat": "Moto",
+      "desc": "Cuadro Moto SIN MOTOR para proyecto Picadas o REPUESTO Zanella rx150, incluye cuna de motor, horquilla trasera y horquilla delantera. LEGAL",
+      "img": "img_mstbuvnhovp3.jpg",
       "sold": false
     }
   ]
