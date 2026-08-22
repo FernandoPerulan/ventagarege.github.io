@@ -8,14 +8,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --kraft:#E7D3AE;
-    --kraft-dark:#C9AE7F;
-    --card:#FFFDF6;
-    --ink:#2A2118;
-    --ink-soft:#6E5F4B;
-    --marker:#C7361F;
-    --tape:#F5C542;
-    --wa:#1FAF54;
+    --kraft:#E7D3AE; --kraft-dark:#C9AE7F; --card:#FFFDF6;
+    --ink:#2A2118; --ink-soft:#6E5F4B; --marker:#C7361F;
+    --tape:#F5C542; --wa:#1FAF54;
     --shadow:0 4px 10px rgba(42,33,24,.18);
     --display:'Permanent Marker', 'Comic Sans MS', cursive;
     --body:'Nunito', system-ui, -apple-system, sans-serif;
@@ -23,176 +18,84 @@
   *{box-sizing:border-box; margin:0; padding:0;}
   html{scroll-behavior:smooth;}
   body{
-    font-family:var(--body);
-    color:var(--ink);
-    background:var(--kraft);
+    font-family:var(--body); color:var(--ink); background:var(--kraft);
     background-image:
       repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 2px, transparent 2px 6px),
       radial-gradient(ellipse at top, rgba(255,255,255,.25), transparent 60%);
-    min-height:100vh;
-    padding-bottom:110px;
+    min-height:100vh; padding-bottom:110px;
   }
-
-  /* ---------- Cartel (hero) ---------- */
   .hero{ display:flex; justify-content:center; padding:34px 16px 10px; }
   .sign{
-    position:relative;
-    background:#B98A54;
+    position:relative; background:#B98A54;
     background-image:repeating-linear-gradient(90deg, rgba(0,0,0,.06) 0 6px, transparent 6px 12px);
-    border:3px solid #8A6238;
-    border-radius:6px;
-    padding:26px 34px 22px;
-    max-width:620px; width:100%;
-    text-align:center;
-    box-shadow:var(--shadow);
-    transform:rotate(-1deg);
+    border:3px solid #8A6238; border-radius:6px; padding:26px 34px 22px;
+    max-width:620px; width:100%; text-align:center; box-shadow:var(--shadow); transform:rotate(-1deg);
   }
   .sign::before, .sign::after{
     content:""; position:absolute; top:-14px; width:90px; height:28px;
-    background:rgba(245,197,66,.85); transform:rotate(-4deg);
-    box-shadow:0 1px 3px rgba(0,0,0,.15);
+    background:rgba(245,197,66,.85); transform:rotate(-4deg); box-shadow:0 1px 3px rgba(0,0,0,.15);
   }
-  .sign::before{ left:8%; }
-  .sign::after{ right:8%; transform:rotate(5deg); }
-  .sign h1{
-    font-family:var(--display);
-    font-size:clamp(2rem, 6vw, 3.2rem);
-    color:#FFF7E6;
-    text-shadow:2px 2px 0 rgba(0,0,0,.25);
-    letter-spacing:1px;
-    line-height:1.1;
-  }
-  .sign p{
-    margin-top:8px;
-    font-family:var(--display);
-    font-size:clamp(1rem, 3vw, 1.3rem);
-    color:var(--tape);
-  }
+  .sign::before{ left:8%; } .sign::after{ right:8%; transform:rotate(5deg); }
+  .sign h1{ font-family:var(--display); font-size:clamp(2rem, 6vw, 3.2rem); color:#FFF7E6;
+    text-shadow:2px 2px 0 rgba(0,0,0,.25); letter-spacing:1px; line-height:1.1; }
+  .sign p{ margin-top:8px; font-family:var(--display); font-size:clamp(1rem, 3vw, 1.3rem); color:var(--tape); }
+  .hint{ text-align:center; color:var(--ink-soft); font-size:.95rem; padding:8px 20px 4px; font-weight:600; }
 
-  .hint{
-    text-align:center; color:var(--ink-soft);
-    font-size:.95rem; padding:8px 20px 4px; font-weight:600;
-  }
-
-  /* ---------- Filtros de categoría ---------- */
-  .filters{
-    display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
-    max-width:1100px; margin:14px auto 0; padding:0 18px;
-  }
-  .chip{
-    font-family:var(--body); font-weight:800; font-size:.92rem;
-    border:2px solid var(--ink); border-radius:999px;
-    background:var(--card); color:var(--ink);
-    padding:7px 16px; cursor:pointer;
-    box-shadow:0 2px 4px rgba(42,33,24,.12);
-    transition:filter .12s ease, transform .06s ease;
-  }
+  .filters{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:1100px; margin:14px auto 0; padding:0 18px; }
+  .chip{ font-family:var(--body); font-weight:800; font-size:.92rem; border:2px solid var(--ink); border-radius:999px;
+    background:var(--card); color:var(--ink); padding:7px 16px; cursor:pointer; box-shadow:0 2px 4px rgba(42,33,24,.12);
+    transition:filter .12s ease, transform .06s ease; }
   .chip:active{ transform:scale(.97); }
   .chip.active{ background:var(--ink); color:#FFF7E6; }
   .chip .count{ font-weight:600; opacity:.65; margin-left:4px; }
 
-  /* ---------- Catálogo ---------- */
-  .grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
-    gap:26px;
-    max-width:1100px;
-    margin:22px auto 0;
-    padding:0 18px;
-  }
-  .card{
-    position:relative;
-    background:var(--card);
-    border-radius:4px;
-    box-shadow:var(--shadow);
-    padding:12px 12px 14px;
-    display:flex; flex-direction:column;
-    transform:rotate(.6deg);
-    transition:transform .15s ease;
-  }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:26px; max-width:1100px; margin:22px auto 0; padding:0 18px; }
+  .card{ position:relative; background:var(--card); border-radius:4px; box-shadow:var(--shadow); padding:12px 12px 14px;
+    display:flex; flex-direction:column; transform:rotate(.6deg); transition:transform .15s ease; }
   .grid .card:nth-child(even){ transform:rotate(-.7deg); }
   .card:hover{ transform:rotate(0) translateY(-3px); }
-  .card::before{
-    content:""; position:absolute; top:-10px; left:50%; transform:translateX(-50%) rotate(-2deg);
-    width:84px; height:22px; background:rgba(245,197,66,.8);
-    box-shadow:0 1px 2px rgba(0,0,0,.12);
-  }
-  .card .photo{
-    width:100%; aspect-ratio:4/3; object-fit:cover;
-    background:#EDE6D6; border-radius:2px;
-    display:block;
-  }
-  .photo-empty{
-    width:100%; aspect-ratio:4/3; border-radius:2px;
-    background:#EDE6D6; color:var(--ink-soft);
-    display:flex; align-items:center; justify-content:center;
-    font-family:var(--display); font-size:1.1rem;
-  }
+  .card::before{ content:""; position:absolute; top:-10px; left:50%; transform:translateX(-50%) rotate(-2deg);
+    width:84px; height:22px; background:rgba(245,197,66,.8); box-shadow:0 1px 2px rgba(0,0,0,.12); }
+  .card .photo{ width:100%; aspect-ratio:4/3; object-fit:cover; background:#EDE6D6; border-radius:2px; display:block; }
+  .photo-empty{ width:100%; aspect-ratio:4/3; border-radius:2px; background:#EDE6D6; color:var(--ink-soft);
+    display:flex; align-items:center; justify-content:center; font-family:var(--display); font-size:1.1rem; }
   .card h3{ font-size:1.12rem; font-weight:800; margin:12px 2px 4px; }
   .card .desc{ font-size:.92rem; color:var(--ink-soft); margin:0 2px 12px; flex:1; }
-  .price-tag{
-    position:absolute; top:8px; right:-8px; transform:rotate(6deg);
-    background:var(--marker); color:#FFF7E6;
-    font-family:var(--display); font-size:1.15rem;
-    padding:6px 14px; border-radius:3px;
-    box-shadow:0 2px 5px rgba(0,0,0,.25);
-  }
-  .btn{
-    font-family:var(--body); font-weight:800; font-size:1rem;
-    border:none; border-radius:6px; cursor:pointer;
-    padding:11px 14px; transition:filter .12s ease, transform .06s ease;
-  }
+  .price-tag{ position:absolute; top:8px; right:-8px; transform:rotate(6deg); background:var(--marker); color:#FFF7E6;
+    font-family:var(--display); font-size:1.15rem; padding:6px 14px; border-radius:3px; box-shadow:0 2px 5px rgba(0,0,0,.25); }
+  .btn{ font-family:var(--body); font-weight:800; font-size:1rem; border:none; border-radius:6px; cursor:pointer;
+    padding:11px 14px; transition:filter .12s ease, transform .06s ease; }
   .btn:active{ transform:scale(.98); }
+  .btn[disabled]{ opacity:.6; cursor:default; }
   .btn-add{ background:var(--ink); color:#FFF7E6; width:100%; }
   .btn-add.in-cart{ background:var(--wa); }
   .card.sold .photo, .card.sold .photo-empty{ filter:grayscale(1) opacity(.6); }
-  .sold-stamp{
-    position:absolute; top:42%; left:50%; transform:translate(-50%,-50%) rotate(-14deg);
-    font-family:var(--display); font-size:1.9rem; color:var(--marker);
-    border:3px solid var(--marker); padding:2px 16px; border-radius:4px;
-    background:rgba(255,253,246,.85);
-  }
-  .empty-state{
-    grid-column:1/-1; text-align:center; padding:60px 20px;
-    color:var(--ink-soft); font-size:1.05rem; font-weight:600;
-  }
+  .sold-stamp{ position:absolute; top:42%; left:50%; transform:translate(-50%,-50%) rotate(-14deg);
+    font-family:var(--display); font-size:1.9rem; color:var(--marker); border:3px solid var(--marker);
+    padding:2px 16px; border-radius:4px; background:rgba(255,253,246,.85); }
+  .empty-state{ grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--ink-soft); font-size:1.05rem; font-weight:600; }
   .empty-state span{ font-family:var(--display); display:block; font-size:1.5rem; margin-bottom:8px; color:var(--ink); }
 
-  /* ---------- Barra carrito ---------- */
-  .cartbar{
-    position:fixed; left:0; right:0; bottom:0; z-index:40;
-    background:var(--card); box-shadow:0 -4px 14px rgba(42,33,24,.25);
-    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
-    display:none; align-items:center; gap:12px; justify-content:center;
-    flex-wrap:wrap;
-  }
+  .cartbar{ position:fixed; left:0; right:0; bottom:0; z-index:40; background:var(--card);
+    box-shadow:0 -4px 14px rgba(42,33,24,.25); padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    display:none; align-items:center; gap:12px; justify-content:center; flex-wrap:wrap; }
   .cartbar.visible{ display:flex; }
   .cartbar .summary{ font-weight:800; }
   .cartbar .summary small{ display:block; font-weight:600; color:var(--ink-soft); }
-  .btn-wa{
-    background:var(--wa); color:#fff; display:flex; align-items:center; gap:8px;
-  }
+  .btn-wa{ background:var(--wa); color:#fff; display:flex; align-items:center; gap:8px; }
   .btn-ghost{ background:transparent; color:var(--ink-soft); text-decoration:underline; padding:11px 6px; }
 
-  /* ---------- Modales ---------- */
-  .overlay{
-    position:fixed; inset:0; background:rgba(42,33,24,.55); z-index:50;
-    display:none; align-items:flex-start; justify-content:center;
-    padding:30px 14px; overflow-y:auto;
-  }
+  .overlay{ position:fixed; inset:0; background:rgba(42,33,24,.55); z-index:50; display:none;
+    align-items:flex-start; justify-content:center; padding:30px 14px; overflow-y:auto; }
   .overlay.open{ display:flex; }
-  .modal{
-    background:var(--card); border-radius:8px; box-shadow:var(--shadow);
-    width:100%; max-width:520px; padding:22px;
-  }
+  .modal{ background:var(--card); border-radius:8px; box-shadow:var(--shadow); width:100%; max-width:520px; padding:22px; }
   .modal.wide{ max-width:760px; }
   .modal h2{ font-family:var(--display); font-size:1.5rem; margin-bottom:14px; }
   .modal .close-row{ display:flex; justify-content:flex-end; margin-top:14px; }
   label{ display:block; font-weight:700; font-size:.9rem; margin:12px 0 4px; }
-  input[type=text], input[type=number], input[type=password], input[type=tel], select, textarea{
-    width:100%; padding:10px 12px; border:2px solid var(--kraft-dark);
-    border-radius:6px; font-family:var(--body); font-size:1rem; background:#fff;
-  }
+  input[type=text], input[type=number], input[type=password], input[type=email], input[type=tel], select, textarea{
+    width:100%; padding:10px 12px; border:2px solid var(--kraft-dark); border-radius:6px;
+    font-family:var(--body); font-size:1rem; background:#fff; }
   select{ cursor:pointer; }
   textarea{ resize:vertical; min-height:70px; }
   input:focus, select:focus, textarea:focus, .btn:focus-visible{ outline:3px solid var(--tape); outline-offset:1px; }
@@ -202,33 +105,22 @@
   .btn-line{ background:transparent; border:2px solid var(--kraft-dark); color:var(--ink); }
   .row-btns{ display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
 
-  /* Lista del carrito */
   .cart-list{ list-style:none; }
-  .cart-list li{
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
-    padding:9px 0; border-bottom:1px dashed var(--kraft-dark);
-  }
+  .cart-list li{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 0; border-bottom:1px dashed var(--kraft-dark); }
   .cart-list .n{ font-weight:700; }
   .cart-list .p{ font-family:var(--display); color:var(--marker); white-space:nowrap; }
   .cart-list button{ background:none; border:none; color:var(--ink-soft); cursor:pointer; font-size:1.1rem; }
   .cart-total{ display:flex; justify-content:space-between; font-weight:800; padding:12px 0 4px; font-size:1.1rem; }
   .cart-total .p{ font-family:var(--display); color:var(--marker); }
 
-  /* ---------- Admin ---------- */
-  .admin-link{
-    display:block; text-align:center; margin:44px auto 8px;
-    color:var(--ink-soft); background:none; border:none;
-    font-size:.85rem; cursor:pointer; text-decoration:underline; font-family:var(--body);
-  }
+  .admin-link{ display:block; text-align:center; margin:44px auto 8px; color:var(--ink-soft);
+    background:none; border:none; font-size:.85rem; cursor:pointer; text-decoration:underline; font-family:var(--body); }
   .admin-grid{ display:grid; grid-template-columns:1fr; gap:22px; }
   @media(min-width:660px){ .admin-grid{ grid-template-columns:1fr 1fr; } }
   .admin-section{ border:2px dashed var(--kraft-dark); border-radius:8px; padding:14px; }
   .admin-section h3{ font-family:var(--display); font-size:1.15rem; margin-bottom:10px; }
   .admin-list{ list-style:none; max-height:340px; overflow-y:auto; }
-  .admin-list li{
-    display:flex; align-items:center; gap:10px; padding:8px 0;
-    border-bottom:1px dashed var(--kraft-dark);
-  }
+  .admin-list li{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed var(--kraft-dark); }
   .admin-list img{ width:46px; height:46px; object-fit:cover; border-radius:4px; background:#EDE6D6; }
   .admin-list .thumb-empty{ width:46px; height:46px; border-radius:4px; background:#EDE6D6; flex-shrink:0; }
   .admin-list .info{ flex:1; min-width:0; }
@@ -236,19 +128,11 @@
   .admin-list .info small{ color:var(--ink-soft); }
   .icon-btn{ background:none; border:none; cursor:pointer; font-size:1.05rem; padding:4px; }
   .preview-img{ margin-top:8px; max-width:140px; border-radius:6px; display:none; }
-  .toast{
-    position:fixed; top:16px; left:50%; transform:translateX(-50%);
-    background:var(--ink); color:#FFF7E6; padding:10px 20px; border-radius:8px;
-    font-weight:700; z-index:80; display:none; box-shadow:var(--shadow); max-width:92vw; text-align:center;
-  }
-  .banner{
-    background:#FBEEC8; border:2px solid var(--tape); border-radius:8px;
-    padding:10px 12px; font-size:.86rem; color:var(--ink); margin-bottom:6px; line-height:1.4;
-  }
-  .banner b{ color:var(--marker); }
-  .status-dot{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:middle; }
-  .status-dot.on{ background:var(--wa); }
-  .status-dot.off{ background:var(--kraft-dark); }
+  .toast{ position:fixed; top:16px; left:50%; transform:translateX(-50%); background:var(--ink); color:#FFF7E6;
+    padding:10px 20px; border-radius:8px; font-weight:700; z-index:80; display:none; box-shadow:var(--shadow); max-width:92vw; text-align:center; }
+  .banner{ background:#FBEEC8; border:2px solid var(--tape); border-radius:8px; padding:10px 12px; font-size:.86rem; color:var(--ink); margin-bottom:6px; line-height:1.4; }
+  .banner.err{ background:#F7D9D2; border-color:var(--marker); }
+  .loading{ text-align:center; color:var(--ink-soft); padding:50px 20px; font-weight:600; }
   @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } }
 </style>
 </head>
@@ -265,16 +149,14 @@
 
 <nav class="filters" id="filters" aria-label="Filtrar por categoría"></nav>
 
-<main class="grid" id="catalog" aria-live="polite"></main>
+<main class="grid" id="catalog" aria-live="polite">
+  <div class="loading" id="loading">Cargando catálogo…</div>
+</main>
 
 <button class="admin-link" id="adminLink" type="button">Administración</button>
 
-<!-- Barra de carrito -->
 <div class="cartbar" id="cartbar">
-  <div class="summary">
-    <span id="cartCount"></span>
-    <small id="cartTotalBar"></small>
-  </div>
+  <div class="summary"><span id="cartCount"></span><small id="cartTotalBar"></small></div>
   <button class="btn btn-dark" id="btnViewCart" type="button">Ver lista</button>
   <button class="btn btn-wa" id="btnSendWa" type="button">📱 Enviar por WhatsApp</button>
 </div>
@@ -296,14 +178,15 @@
 <div class="overlay" id="loginOverlay">
   <div class="modal">
     <h2>Administración</h2>
-    <label for="loginUser">Usuario</label>
-    <input type="text" id="loginUser" autocomplete="username">
+    <label for="loginEmail">Email</label>
+    <input type="email" id="loginEmail" autocomplete="username" placeholder="tu@email.com">
     <label for="loginPass">Contraseña</label>
     <input type="password" id="loginPass" autocomplete="current-password">
     <div class="row-btns">
       <button class="btn btn-primary" id="btnLogin" type="button">Entrar</button>
       <button class="btn btn-ghost" data-close type="button">Cancelar</button>
     </div>
+    <p class="field-note" style="margin-top:10px">Usá el email y contraseña del usuario que creaste en Supabase.</p>
   </div>
 </div>
 
@@ -311,17 +194,6 @@
 <div class="overlay" id="adminOverlay">
   <div class="modal wide">
     <h2>Panel de administración</h2>
-
-    <div class="banner" id="repoBanner">
-      <span class="status-dot off" id="repoDot"></span>
-      <span id="repoStatus">Carpeta del repositorio no conectada.</span>
-      <br>Para guardar productos y fotos directo en tu proyecto, conectá la carpeta del repo
-      (la que contiene <b>index.html</b> y <b>datos.json</b>).
-      <div class="row-btns" style="margin-top:8px">
-        <button class="btn btn-dark" id="btnConnectRepo" type="button">📁 Conectar carpeta del repo</button>
-      </div>
-    </div>
-
     <div class="admin-grid">
 
       <section class="admin-section">
@@ -331,16 +203,14 @@
         <label for="pPrice">Precio (ARS)</label>
         <input type="number" id="pPrice" min="0" step="1" placeholder="45000">
         <label for="pCatSel">Categoría</label>
-        <select id="pCatSel">
-          <option value="">Sin categoría</option>
-        </select>
+        <select id="pCatSel"><option value="">Sin categoría</option></select>
         <input type="text" id="pCatNew" placeholder="Nombre de la nueva categoría" style="display:none; margin-top:8px">
         <p class="field-note">Elegí una existente o “➕ Nueva categoría…” para crear otra.</p>
         <label for="pDesc">Descripción</label>
         <textarea id="pDesc" placeholder="Estado, detalles, medidas..."></textarea>
         <label for="pImg">Foto</label>
         <input type="file" id="pImg" accept="image/*">
-        <p class="field-note">La foto se comprime y se guarda como archivo en la carpeta <b>/img</b> del repo.</p>
+        <p class="field-note">Se comprime y se sube a Supabase Storage.</p>
         <img class="preview-img" id="pPreview" alt="Vista previa de la foto">
         <div class="row-btns">
           <button class="btn btn-primary" id="btnSaveProduct" type="button">Guardar producto</button>
@@ -362,24 +232,16 @@
         <input type="text" id="cfgTitle">
         <label for="cfgSubtitle">Subtítulo</label>
         <input type="text" id="cfgSubtitle">
-        <label for="cfgUser">Usuario admin</label>
-        <input type="text" id="cfgUser">
-        <label for="cfgPass">Contraseña admin</label>
-        <input type="text" id="cfgPass">
         <div class="row-btns">
           <button class="btn btn-dark" id="btnSaveCfg" type="button">Guardar configuración</button>
         </div>
       </section>
 
       <section class="admin-section">
-        <h3>Publicar</h3>
-        <p class="field-note" style="margin-bottom:10px">
-          Todo se escribe en <b>datos.json</b> y en <b>/img</b> dentro de tu repo.
-          Después, en VS Code: <b>commit + push</b> y GitHub Pages se actualiza solo.
-        </p>
+        <h3>Sesión</h3>
+        <p class="field-note" id="sessionInfo" style="margin-bottom:10px">Conectado.</p>
         <div class="row-btns">
-          <button class="btn btn-line" id="btnExportJson" type="button">Descargar copia de datos.json</button>
-          <button class="btn btn-ghost" id="btnReset" type="button">Vaciar todo</button>
+          <button class="btn btn-line" id="btnLogout" type="button">Cerrar sesión</button>
         </div>
       </section>
 
@@ -392,462 +254,315 @@
 
 <div class="toast" id="toast" role="status"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
   "use strict";
 
-  var DATA_FILE = "datos.json";
-  var IMG_DIR = "img";
-  var SESSION_KEY = "venta_garaje_admin"; // solo para recordar login en la sesión
+  // ============================================================
+  //  PEGÁ ACÁ TUS DATOS DE SUPABASE (Project URL + anon public key)
+  //  Los encontrás en: Supabase → Project Settings → API
+  //  Son públicos por diseño: no hay problema en que estén acá.
+  // ============================================================
+  // ---- Configuración de Supabase: reemplazá con los datos de tu proyecto ----
+  var SUPABASE_URL      = "https://mugzpgyrqlqnoqnpexzg.supabase.co";
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11Z3pwZ3lycWxxbm9xbnBleHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczNTM3NzEsImV4cCI6MjEwMjkyOTc3MX0.tVIqjxS3EI1tUvfVoy30Noabs_mOKdsm8lJqQsji8rM";
+  var BUCKET = "fotos";
+  // ============================================================
 
-  var data = { settings:{ wa:"", title:"Venta de Garaje", subtitle:"¡Todo debe irse!", user:"admin", pass:"1234" }, products:[] };
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  var productos = [];
+  var settings = { wa:"", title:"Venta de Garaje", subtitle:"¡Todo debe irse!" };
   var cart = [];
   var editingId = null;
-  var pendingImg = null;    // { blob, dataURL, ext } de la foto recién elegida (aún no guardada)
+  var pending = null;      // { blob, dataURL } de la foto nueva
   var isAdmin = false;
-  var ALL = "__all__";
-  var OTHER = "Otros";
-  var NEW_CAT = "__new__";
+  var ALL = "__all__", OTHER = "Otros", NEW_CAT = "__new__";
   var activeCat = ALL;
-
-  // Handles de la File System Access API
-  var repoHandle = null;    // carpeta del repo
-  var imgDirHandle = null;  // carpeta /img
-
-  var supportsFS = ("showDirectoryPicker" in window);
 
   var fmt = new Intl.NumberFormat("es-AR", { style:"currency", currency:"ARS", maximumFractionDigits:0 });
   function money(n){ return fmt.format(Number(n) || 0); }
-  function esc(s){
-    return String(s == null ? "" : s)
-      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-      .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
-  }
-  function uid(){ return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
-  function toast(msg){
-    var t = document.getElementById("toast");
-    t.textContent = msg; t.style.display = "block";
-    clearTimeout(t._h); t._h = setTimeout(function(){ t.style.display = "none"; }, 3400);
-  }
-  function catOf(p){ return String(p.cat || "").trim() || OTHER; }
+  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+  function toast(m){ var t=document.getElementById("toast"); t.textContent=m; t.style.display="block"; clearTimeout(t._h); t._h=setTimeout(function(){t.style.display="none";},3600); }
+  function catOf(p){ return String(p.categoria||"").trim() || OTHER; }
   function categories(){
-    var seen = {};
-    data.products.forEach(function(p){ seen[catOf(p)] = (seen[catOf(p)] || 0) + 1; });
-    return Object.keys(seen).sort(function(a,b){
-      if (a === OTHER) return 1; if (b === OTHER) return -1;
-      return a.localeCompare(b, "es");
-    }).map(function(n){ return { name:n, count:seen[n] }; });
+    var seen={}; productos.forEach(function(p){ seen[catOf(p)]=(seen[catOf(p)]||0)+1; });
+    return Object.keys(seen).sort(function(a,b){ if(a===OTHER)return 1; if(b===OTHER)return -1; return a.localeCompare(b,"es"); })
+      .map(function(n){ return {name:n,count:seen[n]}; });
   }
+  function el(id){ return document.getElementById(id); }
+  function open(id){ el(id).classList.add("open"); }
+  function close(id){ el(id).classList.remove("open"); }
 
-  /* ---------- Carga inicial: lee datos.json ---------- */
-  function boot(){
-    fetch(DATA_FILE + "?v=" + Date.now())
-      .then(function(r){ if (!r.ok) throw new Error("no datos.json"); return r.json(); })
-      .then(function(d){ if (d && d.settings && Array.isArray(d.products)) data = d; })
-      .catch(function(){ /* sin datos.json todavía: se usan los valores por defecto */ })
-      .then(function(){ renderAll(); });
+  /* ---------- Carga desde Supabase ---------- */
+  function loadAll(){
+    return Promise.all([
+      sb.from("config").select("*").eq("id",1).single(),
+      sb.from("productos").select("*").order("creado",{ascending:true})
+    ]).then(function(res){
+      var cfg=res[0], prods=res[1];
+      if (cfg.error && prods.error){ throw cfg.error; }
+      if (cfg.data) settings = cfg.data;
+      productos = prods.data || [];
+      renderAll();
+    }).catch(function(err){
+      console.error(err);
+      el("catalog").innerHTML =
+        '<div class="empty-state"><span>No se pudo conectar</span>Revisá que hayas puesto bien la URL y la anon key de Supabase en el index.html, y que corriste el SQL.</div>';
+    });
   }
 
   /* ---------- Render público ---------- */
   function renderHeader(){
-    document.getElementById("saleTitle").textContent = data.settings.title || "Venta de Garaje";
-    document.getElementById("saleSubtitle").textContent = data.settings.subtitle || "";
-    document.title = data.settings.title || "Venta de Garaje";
-  }
-  function imgSrc(p){
-    if (!p.img) return null;
-    // dataURL (foto recién agregada, aún no guardada) o ruta relativa a /img
-    return p.img.indexOf("data:") === 0 ? p.img : (IMG_DIR + "/" + p.img);
+    el("saleTitle").textContent = settings.title || "Venta de Garaje";
+    el("saleSubtitle").textContent = settings.subtitle || "";
+    document.title = settings.title || "Venta de Garaje";
   }
   function renderFilters(){
-    var box = document.getElementById("filters");
-    var cats = categories();
-    if (cats.length < 2){ box.innerHTML = ""; activeCat = ALL; return; }
-    if (activeCat !== ALL && !cats.some(function(c){ return c.name === activeCat; })) activeCat = ALL;
-    var chips = ['<button class="chip' + (activeCat === ALL ? " active" : "") + '" data-cat="' + ALL + '" type="button">Todos<span class="count">' + data.products.length + '</span></button>'];
-    cats.forEach(function(c){
-      chips.push('<button class="chip' + (activeCat === c.name ? " active" : "") + '" data-cat="' + esc(c.name) + '" type="button">' + esc(c.name) + '<span class="count">' + c.count + '</span></button>');
-    });
-    box.innerHTML = chips.join("");
+    var box=el("filters"), cats=categories();
+    if (cats.length<2){ box.innerHTML=""; activeCat=ALL; return; }
+    if (activeCat!==ALL && !cats.some(function(c){return c.name===activeCat;})) activeCat=ALL;
+    var chips=['<button class="chip'+(activeCat===ALL?" active":"")+'" data-cat="'+ALL+'" type="button">Todos<span class="count">'+productos.length+'</span></button>'];
+    cats.forEach(function(c){ chips.push('<button class="chip'+(activeCat===c.name?" active":"")+'" data-cat="'+esc(c.name)+'" type="button">'+esc(c.name)+'<span class="count">'+c.count+'</span></button>'); });
+    box.innerHTML=chips.join("");
   }
   function renderCatalog(){
-    var box = document.getElementById("catalog");
-    if (!data.products.length){
-      box.innerHTML = '<div class="empty-state"><span>Todavía no hay productos</span>Entrá a “Administración” (abajo) para cargar los primeros.</div>';
-      return;
-    }
-    var visible = activeCat === ALL ? data.products : data.products.filter(function(p){ return catOf(p) === activeCat; });
-    if (!visible.length){
-      box.innerHTML = '<div class="empty-state"><span>Nada por acá</span>No quedan productos en esta categoría.</div>';
-      return;
-    }
-    box.innerHTML = visible.map(function(p){
-      var inCart = cart.indexOf(p.id) !== -1;
-      var src = imgSrc(p);
-      var img = src ? '<img class="photo" src="' + esc(src) + '" alt="' + esc(p.name) + '">' : '<div class="photo-empty">sin foto</div>';
-      var btn = p.sold
-        ? '<button class="btn btn-add" disabled>Vendido</button>'
-        : '<button class="btn btn-add' + (inCart ? " in-cart" : "") + '" data-toggle="' + p.id + '">' + (inCart ? "✓ En tu lista" : "Me interesa") + '</button>';
-      return '<article class="card' + (p.sold ? " sold" : "") + '">' + img +
-        (p.sold ? '<div class="sold-stamp">VENDIDO</div>' : "") +
-        '<div class="price-tag">' + money(p.price) + '</div>' +
-        '<h3>' + esc(p.name) + '</h3><p class="desc">' + esc(p.desc) + '</p>' + btn + '</article>';
+    var box=el("catalog");
+    if (!productos.length){ box.innerHTML='<div class="empty-state"><span>Todavía no hay productos</span>Entrá a “Administración” para cargar los primeros.</div>'; return; }
+    var vis = activeCat===ALL ? productos : productos.filter(function(p){return catOf(p)===activeCat;});
+    if (!vis.length){ box.innerHTML='<div class="empty-state"><span>Nada por acá</span>No quedan productos en esta categoría.</div>'; return; }
+    box.innerHTML = vis.map(function(p){
+      var inCart = cart.indexOf(p.id)!==-1;
+      var img = p.img ? '<img class="photo" src="'+esc(p.img)+'" alt="'+esc(p.nombre)+'">' : '<div class="photo-empty">sin foto</div>';
+      var btn = p.sold ? '<button class="btn btn-add" disabled>Vendido</button>'
+        : '<button class="btn btn-add'+(inCart?" in-cart":"")+'" data-toggle="'+p.id+'">'+(inCart?"✓ En tu lista":"Me interesa")+'</button>';
+      return '<article class="card'+(p.sold?" sold":"")+'">'+img+(p.sold?'<div class="sold-stamp">VENDIDO</div>':"")+
+        '<div class="price-tag">'+money(p.precio)+'</div><h3>'+esc(p.nombre)+'</h3>'+
+        '<p class="desc">'+esc(p.descripcion)+'</p>'+btn+'</article>';
     }).join("");
   }
-  function cartProducts(){ return cart.map(function(id){ return data.products.find(function(p){ return p.id === id; }); }).filter(Boolean); }
-  function cartTotal(){ return cartProducts().reduce(function(s,p){ return s + (Number(p.price)||0); }, 0); }
+  function cartProducts(){ return cart.map(function(id){ return productos.find(function(p){return p.id===id;}); }).filter(Boolean); }
+  function cartTotal(){ return cartProducts().reduce(function(s,p){ return s+(Number(p.precio)||0); },0); }
   function renderCartBar(){
-    var bar = document.getElementById("cartbar"); var items = cartProducts();
+    var bar=el("cartbar"), items=cartProducts();
     if (!items.length){ bar.classList.remove("visible"); return; }
     bar.classList.add("visible");
-    document.getElementById("cartCount").textContent = items.length === 1 ? "1 producto en tu lista" : items.length + " productos en tu lista";
-    document.getElementById("cartTotalBar").textContent = "Total: " + money(cartTotal());
+    el("cartCount").textContent = items.length===1?"1 producto en tu lista":items.length+" productos en tu lista";
+    el("cartTotalBar").textContent = "Total: "+money(cartTotal());
   }
   function renderCartModal(){
-    document.getElementById("cartList").innerHTML = cartProducts().map(function(p){
-      return '<li><span class="n">' + esc(p.name) + '</span><span class="p">' + money(p.price) + '</span>' +
-        '<button data-remove="' + p.id + '" title="Quitar" aria-label="Quitar ' + esc(p.name) + '">✕</button></li>';
+    el("cartList").innerHTML = cartProducts().map(function(p){
+      return '<li><span class="n">'+esc(p.nombre)+'</span><span class="p">'+money(p.precio)+'</span>'+
+        '<button data-remove="'+p.id+'" title="Quitar" aria-label="Quitar '+esc(p.nombre)+'">✕</button></li>';
     }).join("");
-    document.getElementById("cartTotalModal").textContent = money(cartTotal());
+    el("cartTotalModal").textContent = money(cartTotal());
   }
-  function toggleCart(id){
-    var i = cart.indexOf(id);
-    if (i === -1) cart.push(id); else cart.splice(i,1);
-    renderCatalog(); renderCartBar(); renderCartModal();
-  }
+  function toggleCart(id){ var i=cart.indexOf(id); if(i===-1)cart.push(id); else cart.splice(i,1); renderCatalog(); renderCartBar(); renderCartModal(); }
   function sendWhatsApp(){
-    var items = cartProducts(); if (!items.length) return;
-    if (!data.settings.wa){ toast("Falta configurar el número de WhatsApp."); return; }
-    var lines = ["¡Hola! Me interesan estos productos de la " + (data.settings.title || "venta de garaje") + ":", ""];
-    items.forEach(function(p){ lines.push("• " + p.name + " — " + money(p.price)); });
-    lines.push("", "Total: " + money(cartTotal()), "¿Siguen disponibles?");
-    window.open("https://wa.me/" + data.settings.wa.replace(/\D/g,"") + "?text=" + encodeURIComponent(lines.join("\n")), "_blank");
-  }
-
-  /* ---------- File System Access: carpeta del repo ---------- */
-  function updateRepoBanner(){
-    var dot = document.getElementById("repoDot");
-    var st = document.getElementById("repoStatus");
-    var btn = document.getElementById("btnConnectRepo");
-    if (!supportsFS){
-      dot.className = "status-dot off";
-      st.innerHTML = "Este navegador no permite guardar en carpetas. Usá <b>Chrome</b> o <b>Edge</b> para el modo automático, o descargá el datos.json a mano.";
-      btn.style.display = "none";
-      return;
-    }
-    if (repoHandle){
-      dot.className = "status-dot on";
-      st.innerHTML = "Carpeta conectada: <b>" + esc(repoHandle.name) + "</b>. Los cambios se escriben ahí automáticamente.";
-      btn.textContent = "📁 Cambiar carpeta";
-    } else {
-      dot.className = "status-dot off";
-      st.innerHTML = "Carpeta del repositorio no conectada.";
-      btn.textContent = "📁 Conectar carpeta del repo";
-    }
-  }
-
-  // Pide/verifica permiso de escritura sobre un handle; devuelve true si quedó concedido
-  function ensureWrite(handle){
-    if (!handle.queryPermission) return Promise.resolve(true);
-    return handle.queryPermission({ mode:"readwrite" }).then(function(state){
-      if (state === "granted") return true;
-      return handle.requestPermission({ mode:"readwrite" }).then(function(s){ return s === "granted"; });
-    });
-  }
-
-  function connectRepo(){
-    if (!supportsFS){ toast("Tu navegador no soporta esto. Usá Chrome o Edge."); return; }
-    window.showDirectoryPicker({ mode:"readwrite" }).then(function(handle){
-      repoHandle = handle;
-      return ensureWrite(handle).then(function(ok){
-        if (!ok) throw new Error("sin-permiso");
-        return handle.getDirectoryHandle(IMG_DIR, { create:true });
-      });
-    }).then(function(imgHandle){
-      imgDirHandle = imgHandle;
-      // Intenta cargar el datos.json que esté en la carpeta elegida
-      return repoHandle.getFileHandle(DATA_FILE, { create:false })
-        .then(function(fh){ return fh.getFile(); })
-        .then(function(file){ return file.text(); })
-        .then(function(txt){
-          try { var d = JSON.parse(txt); if (d && d.settings && Array.isArray(d.products)) data = d; } catch(e){}
-        })
-        .catch(function(){ /* no había datos.json en la carpeta, se conserva el actual */ });
-    }).then(function(){
-      updateRepoBanner();
-      renderAll();
-      toast("Carpeta conectada. Ahora los cambios se guardan solos.");
-    }).catch(function(err){
-      if (err && err.name === "AbortError") return; // el usuario canceló
-      if (err && err.message === "sin-permiso"){
-        repoHandle = null;
-        toast("Chrome no dio permiso de edición. Volvé a conectar y elegí “Editar archivos”.");
-        updateRepoBanner();
-        return;
-      }
-      toast("No se pudo conectar la carpeta.");
-    });
-  }
-
-  // Escribe un blob como archivo dentro de /img con el nombre indicado
-  function writeImage(fname, blob){
-    return imgDirHandle.getFileHandle(fname, { create:true })
-      .then(function(fh){ return fh.createWritable(); })
-      .then(function(w){ return w.write(blob).then(function(){ return w.close(); }); });
-  }
-
-  function deleteImage(fname){
-    if (!imgDirHandle || !fname || fname.indexOf("data:") === 0) return Promise.resolve();
-    return imgDirHandle.removeEntry(fname).catch(function(){ /* ya no existe */ });
-  }
-
-  // Escribe el datos.json en la carpeta del repo
-  function writeDataFile(){
-    if (!repoHandle) return Promise.resolve(false);
-    return repoHandle.getFileHandle(DATA_FILE, { create:true })
-      .then(function(fh){ return fh.createWritable(); })
-      .then(function(w){ return w.write(JSON.stringify(data, null, 2)).then(function(){ return w.close(); }); })
-      .then(function(){ return true; });
+    var items=cartProducts(); if(!items.length) return;
+    if(!settings.wa){ toast("Falta configurar el número de WhatsApp."); return; }
+    var lines=["¡Hola! Me interesan estos productos de la "+(settings.title||"venta de garaje")+":",""];
+    items.forEach(function(p){ lines.push("• "+p.nombre+" — "+money(p.precio)); });
+    lines.push("","Total: "+money(cartTotal()),"¿Siguen disponibles?");
+    window.open("https://wa.me/"+settings.wa.replace(/\D/g,"")+"?text="+encodeURIComponent(lines.join("\n")),"_blank");
   }
 
   /* ---------- Admin: render ---------- */
   function renderAdminList(){
-    var list = document.getElementById("adminList");
-    if (!data.products.length){ list.innerHTML = '<li style="border:none;color:var(--ink-soft)">Sin productos todavía.</li>'; return; }
-    list.innerHTML = data.products.map(function(p){
-      var src = imgSrc(p);
-      var thumb = src ? '<img src="' + esc(src) + '" alt="">' : '<span class="thumb-empty"></span>';
-      return '<li>' + thumb +
-        '<span class="info"><b>' + esc(p.name) + '</b><small>' + money(p.price) + ' · ' + esc(catOf(p)) + (p.sold ? " · VENDIDO" : "") + '</small></span>' +
-        '<button class="icon-btn" data-sold="' + p.id + '" title="Marcar vendido / disponible">' + (p.sold ? "↩️" : "🏷️") + '</button>' +
-        '<button class="icon-btn" data-edit="' + p.id + '" title="Editar">✏️</button>' +
-        '<button class="icon-btn" data-del="' + p.id + '" title="Eliminar">🗑️</button></li>';
+    var list=el("adminList");
+    if(!productos.length){ list.innerHTML='<li style="border:none;color:var(--ink-soft)">Sin productos todavía.</li>'; return; }
+    list.innerHTML = productos.map(function(p){
+      var thumb = p.img ? '<img src="'+esc(p.img)+'" alt="">' : '<span class="thumb-empty"></span>';
+      return '<li>'+thumb+'<span class="info"><b>'+esc(p.nombre)+'</b><small>'+money(p.precio)+' · '+esc(catOf(p))+(p.sold?" · VENDIDO":"")+'</small></span>'+
+        '<button class="icon-btn" data-sold="'+p.id+'" title="Vendido / disponible">'+(p.sold?"↩️":"🏷️")+'</button>'+
+        '<button class="icon-btn" data-edit="'+p.id+'" title="Editar">✏️</button>'+
+        '<button class="icon-btn" data-del="'+p.id+'" title="Eliminar">🗑️</button></li>';
     }).join("");
   }
   function fillSettingsForm(){
-    document.getElementById("cfgWa").value = data.settings.wa || "";
-    document.getElementById("cfgTitle").value = data.settings.title || "";
-    document.getElementById("cfgSubtitle").value = data.settings.subtitle || "";
-    document.getElementById("cfgUser").value = data.settings.user || "";
-    document.getElementById("cfgPass").value = data.settings.pass || "";
+    el("cfgWa").value=settings.wa||""; el("cfgTitle").value=settings.title||""; el("cfgSubtitle").value=settings.subtitle||"";
   }
   function renderCatOptions(selected){
-    var sel = document.getElementById("pCatSel");
-    var current = selected !== undefined ? selected : sel.value;
-    var opts = ['<option value="">Sin categoría</option>'];
-    categories().forEach(function(c){ if (c.name !== OTHER) opts.push('<option value="' + esc(c.name) + '">' + esc(c.name) + '</option>'); });
-    opts.push('<option value="' + NEW_CAT + '">➕ Nueva categoría…</option>');
-    sel.innerHTML = opts.join(""); sel.value = current;
-    if (sel.value !== current) sel.value = "";
-    toggleNewCatInput();
+    var sel=el("pCatSel"), cur=selected!==undefined?selected:sel.value;
+    var opts=['<option value="">Sin categoría</option>'];
+    categories().forEach(function(c){ if(c.name!==OTHER) opts.push('<option value="'+esc(c.name)+'">'+esc(c.name)+'</option>'); });
+    opts.push('<option value="'+NEW_CAT+'">➕ Nueva categoría…</option>');
+    sel.innerHTML=opts.join(""); sel.value=cur; if(sel.value!==cur) sel.value="";
+    toggleNewCat();
   }
-  function toggleNewCatInput(){
-    var isNew = document.getElementById("pCatSel").value === NEW_CAT;
-    var input = document.getElementById("pCatNew");
-    input.style.display = isNew ? "block" : "none";
-    if (isNew) input.focus(); else input.value = "";
-  }
-  function resetProductForm(){
-    editingId = null; pendingImg = null;
-    document.getElementById("formTitle").textContent = "Nuevo producto";
-    document.getElementById("pName").value = "";
-    document.getElementById("pPrice").value = "";
-    renderCatOptions("");
-    document.getElementById("pDesc").value = "";
-    document.getElementById("pImg").value = "";
-    var pv = document.getElementById("pPreview"); pv.style.display = "none"; pv.src = "";
-    document.getElementById("btnCancelEdit").style.display = "none";
+  function toggleNewCat(){ var isNew=el("pCatSel").value===NEW_CAT, i=el("pCatNew"); i.style.display=isNew?"block":"none"; if(isNew)i.focus(); else i.value=""; }
+  function resetForm(){
+    editingId=null; pending=null;
+    el("formTitle").textContent="Nuevo producto";
+    el("pName").value=""; el("pPrice").value=""; renderCatOptions(""); el("pDesc").value=""; el("pImg").value="";
+    var pv=el("pPreview"); pv.style.display="none"; pv.src="";
+    el("btnCancelEdit").style.display="none";
   }
   function startEdit(id){
-    var p = data.products.find(function(x){ return x.id === id; });
-    if (!p) return;
-    editingId = id; pendingImg = null;
-    document.getElementById("formTitle").textContent = "Editar producto";
-    document.getElementById("pName").value = p.name;
-    document.getElementById("pPrice").value = p.price;
-    renderCatOptions((p.cat || "").trim());
-    document.getElementById("pDesc").value = p.desc || "";
-    var pv = document.getElementById("pPreview");
-    var src = imgSrc(p);
-    if (src){ pv.src = src; pv.style.display = "block"; } else { pv.style.display = "none"; }
-    document.getElementById("btnCancelEdit").style.display = "inline-block";
+    var p=productos.find(function(x){return x.id===id;}); if(!p)return;
+    editingId=id; pending=null;
+    el("formTitle").textContent="Editar producto";
+    el("pName").value=p.nombre; el("pPrice").value=p.precio; renderCatOptions((p.categoria||"").trim()); el("pDesc").value=p.descripcion||"";
+    var pv=el("pPreview"); if(p.img){pv.src=p.img; pv.style.display="block";} else pv.style.display="none";
+    el("btnCancelEdit").style.display="inline-block";
+    open("adminOverlay");
   }
-
-  // Comprime la foto elegida a JPEG y la guarda en memoria (blob) hasta que se guarde el producto
-  function handleImageFile(file){
-    if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function(){
-      var img = new Image();
-      img.onload = function(){
-        var MAX = 900, w = img.width, h = img.height;
-        if (w > MAX || h > MAX){ if (w >= h){ h = Math.round(h*MAX/w); w = MAX; } else { w = Math.round(w*MAX/h); h = MAX; } }
-        var c = document.createElement("canvas"); c.width = w; c.height = h;
-        c.getContext("2d").drawImage(img, 0, 0, w, h);
-        c.toBlob(function(blob){
-          pendingImg = { blob: blob, dataURL: c.toDataURL("image/jpeg", 0.72), ext: "jpg" };
-          var pv = document.getElementById("pPreview");
-          pv.src = pendingImg.dataURL; pv.style.display = "block";
-        }, "image/jpeg", 0.72);
+  function compress(file){
+    return new Promise(function(res,rej){
+      var reader=new FileReader();
+      reader.onload=function(){
+        var img=new Image();
+        img.onload=function(){
+          var MAX=900,w=img.width,h=img.height;
+          if(w>MAX||h>MAX){ if(w>=h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;} }
+          var c=document.createElement("canvas"); c.width=w;c.height=h; c.getContext("2d").drawImage(img,0,0,w,h);
+          c.toBlob(function(b){ res({blob:b, dataURL:c.toDataURL("image/jpeg",0.72)}); },"image/jpeg",0.72);
+        };
+        img.onerror=rej; img.src=reader.result;
       };
-      img.onerror = function(){ toast("No se pudo leer la imagen."); };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function saveProduct(){
-    var name = document.getElementById("pName").value.trim();
-    var price = parseFloat(document.getElementById("pPrice").value);
-    var selVal = document.getElementById("pCatSel").value;
-    var cat = selVal === NEW_CAT ? document.getElementById("pCatNew").value.trim().replace(/\s+/g," ") : selVal;
-    if (selVal === NEW_CAT && !cat){ toast("Escribí el nombre de la nueva categoría."); return; }
-    if (cat){ var m = categories().find(function(c){ return c.name.toLowerCase() === cat.toLowerCase(); }); if (m) cat = m.name; }
-    var desc = document.getElementById("pDesc").value.trim();
-    if (!name){ toast("Poné un nombre para el producto."); return; }
-    if (isNaN(price) || price < 0){ toast("Poné un precio válido."); return; }
-
-    if (!repoHandle){
-      toast("Primero conectá la carpeta del repo (arriba) para poder guardar.");
-      return;
-    }
-
-    // Nombre de la foto: si hay una nueva, se genera antes de escribirla; si no, conserva la anterior
-    var oldImg = editingId ? (data.products.find(function(x){ return x.id === editingId; }) || {}).img : null;
-    var imgName = pendingImg
-      ? ("img_" + Date.now().toString(36) + Math.random().toString(36).slice(2,6) + "." + pendingImg.ext)
-      : oldImg;
-
-    if (editingId){
-      var p = data.products.find(function(x){ return x.id === editingId; });
-      if (p){ p.name = name; p.price = price; p.cat = cat; p.desc = desc; p.img = imgName || null; }
-    } else {
-      data.products.push({ id: uid(), name: name, price: price, cat: cat, desc: desc, img: imgName || null, sold: false });
-    }
-
-    // Guarda primero datos.json: así el producto queda persistido aunque
-    // la escritura de la foto (siguiente paso) se vea interrumpida.
-    writeDataFile().then(function(){
-      if (!pendingImg) return null;
-      return writeImage(imgName, pendingImg.blob).then(function(){
-        if (oldImg && oldImg !== imgName) return deleteImage(oldImg);
-      });
-    }).then(function(){
-      toast(editingId ? "Producto actualizado y guardado." : "Producto agregado y guardado.");
-      resetProductForm();
-      renderFilters(); renderCatOptions(); renderCatalog(); renderAdminList(); renderCartBar();
-    }).catch(function(err){
-      console.error("Error al guardar:", err);
-      toast("No se pudo guardar: " + (err && err.name ? err.name : "error") + ". Reconectá la carpeta y probá de nuevo.");
+      reader.onerror=rej; reader.readAsDataURL(file);
     });
   }
 
-  function exportJson(){
-    var blob = new Blob([JSON.stringify(data, null, 2)], { type:"application/json" });
-    var a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-    a.download = DATA_FILE; document.body.appendChild(a); a.click();
-    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  function saveProduct(){
+    var name=el("pName").value.trim();
+    var precio=parseFloat(el("pPrice").value);
+    var selVal=el("pCatSel").value;
+    var cat = selVal===NEW_CAT ? el("pCatNew").value.trim().replace(/\s+/g," ") : selVal;
+    if(selVal===NEW_CAT && !cat){ toast("Escribí el nombre de la nueva categoría."); return; }
+    if(cat){ var m=categories().find(function(c){return c.name.toLowerCase()===cat.toLowerCase();}); if(m)cat=m.name; }
+    var desc=el("pDesc").value.trim();
+    if(!name){ toast("Poné un nombre."); return; }
+    if(isNaN(precio)||precio<0){ toast("Poné un precio válido."); return; }
+
+    var btn=el("btnSaveProduct"); btn.disabled=true; btn.textContent="Guardando…";
+    var prev = editingId ? productos.find(function(x){return x.id===editingId;}) : null;
+
+    var step = Promise.resolve({ img: prev?prev.img:null, img_path: prev?prev.img_path:null });
+
+    if (pending){
+      var path = "p_"+Date.now()+"_"+Math.random().toString(36).slice(2,7)+".jpg";
+      step = sb.storage.from(BUCKET).upload(path, pending.blob, { contentType:"image/jpeg", upsert:false })
+        .then(function(up){
+          if(up.error) throw up.error;
+          var pub = sb.storage.from(BUCKET).getPublicUrl(path);
+          // borrar foto anterior si estábamos editando
+          if(prev && prev.img_path){ sb.storage.from(BUCKET).remove([prev.img_path]); }
+          return { img: pub.data.publicUrl, img_path: path };
+        });
+    }
+
+    step.then(function(imgInfo){
+      var row = { nombre:name, precio:precio, categoria:cat, descripcion:desc, img:imgInfo.img, img_path:imgInfo.img_path };
+      if (editingId) return sb.from("productos").update(row).eq("id", editingId);
+      row.sold=false; return sb.from("productos").insert(row);
+    }).then(function(r){
+      if(r.error) throw r.error;
+      return loadAll();
+    }).then(function(){
+      toast(editingId?"Producto actualizado.":"Producto agregado.");
+      resetForm();
+    }).catch(function(err){
+      console.error(err); toast("No se pudo guardar: "+(err.message||"error"));
+    }).then(function(){
+      btn.disabled=false; btn.textContent="Guardar producto";
+    });
   }
 
-  /* ---------- Modales ---------- */
-  function open(id){ document.getElementById(id).classList.add("open"); }
-  function close(id){ document.getElementById(id).classList.remove("open"); }
+  function delProduct(id){
+    var p=productos.find(function(x){return x.id===id;}); if(!p)return;
+    if(!confirm('¿Eliminar "'+p.nombre+'"?')) return;
+    var pre = p.img_path ? sb.storage.from(BUCKET).remove([p.img_path]) : Promise.resolve();
+    pre.then(function(){ return sb.from("productos").delete().eq("id",id); })
+      .then(function(r){ if(r.error) throw r.error; cart=cart.filter(function(c){return c!==id;}); return loadAll(); })
+      .then(function(){ toast("Producto eliminado."); })
+      .catch(function(err){ console.error(err); toast("No se pudo eliminar: "+(err.message||"error")); });
+  }
+  function toggleSold(id){
+    var p=productos.find(function(x){return x.id===id;}); if(!p)return;
+    sb.from("productos").update({ sold: !p.sold }).eq("id",id)
+      .then(function(r){ if(r.error) throw r.error; cart=cart.filter(function(c){return c!==id;}); return loadAll(); })
+      .then(function(){ toast("Guardado."); })
+      .catch(function(err){ console.error(err); toast("No se pudo actualizar: "+(err.message||"error")); });
+  }
+  function saveConfig(){
+    var wa=el("cfgWa").value.replace(/\D/g,"");
+    var title=el("cfgTitle").value.trim()||"Venta de Garaje";
+    var subtitle=el("cfgSubtitle").value.trim();
+    var btn=el("btnSaveCfg"); btn.disabled=true; btn.textContent="Guardando…";
+    sb.from("config").update({ wa:wa, title:title, subtitle:subtitle }).eq("id",1)
+      .then(function(r){ if(r.error) throw r.error; settings.wa=wa; settings.title=title; settings.subtitle=subtitle; renderHeader(); toast("Configuración guardada."); })
+      .catch(function(err){ console.error(err); toast("No se pudo guardar: "+(err.message||"error")); })
+      .then(function(){ btn.disabled=false; btn.textContent="Guardar configuración"; });
+  }
 
+  /* ---------- Auth ---------- */
+  function refreshSession(){
+    return sb.auth.getSession().then(function(r){
+      isAdmin = !!(r.data && r.data.session);
+      if (isAdmin && r.data.session.user) el("sessionInfo").textContent = "Conectado como " + r.data.session.user.email;
+    });
+  }
+  function login(){
+    var email=el("loginEmail").value.trim(), pass=el("loginPass").value;
+    if(!email||!pass){ toast("Completá email y contraseña."); return; }
+    var btn=el("btnLogin"); btn.disabled=true; btn.textContent="Entrando…";
+    sb.auth.signInWithPassword({ email:email, password:pass }).then(function(r){
+      if(r.error) throw r.error;
+      isAdmin=true; close("loginOverlay");
+      if(r.data.user) el("sessionInfo").textContent="Conectado como "+r.data.user.email;
+      renderAdminList(); fillSettingsForm(); resetForm(); open("adminOverlay");
+    }).catch(function(err){ console.error(err); toast("No se pudo entrar: "+(err.message||"credenciales incorrectas")); })
+      .then(function(){ btn.disabled=false; btn.textContent="Entrar"; });
+  }
+  function logout(){
+    sb.auth.signOut().then(function(){ isAdmin=false; close("adminOverlay"); toast("Sesión cerrada."); });
+  }
+
+  /* ---------- Render global ---------- */
   function renderAll(){
     renderHeader(); renderFilters(); renderCatalog(); renderCartBar(); renderCartModal();
-    renderAdminList(); renderCatOptions(); fillSettingsForm(); updateRepoBanner();
+    if(isAdmin){ renderAdminList(); fillSettingsForm(); renderCatOptions(); }
   }
 
   /* ---------- Eventos ---------- */
-  document.getElementById("filters").addEventListener("click", function(e){
-    var b = e.target.closest("[data-cat]"); if (!b) return;
-    activeCat = b.getAttribute("data-cat"); renderFilters(); renderCatalog();
-  });
-  document.getElementById("catalog").addEventListener("click", function(e){
-    var b = e.target.closest("[data-toggle]"); if (b) toggleCart(b.getAttribute("data-toggle"));
-  });
-  document.getElementById("btnViewCart").addEventListener("click", function(){ renderCartModal(); open("cartOverlay"); });
-  document.getElementById("btnSendWa").addEventListener("click", sendWhatsApp);
-  document.getElementById("btnSendWa2").addEventListener("click", sendWhatsApp);
-  document.getElementById("cartList").addEventListener("click", function(e){
-    var b = e.target.closest("[data-remove]");
-    if (b){ toggleCart(b.getAttribute("data-remove")); if (!cart.length) close("cartOverlay"); }
-  });
+  el("filters").addEventListener("click", function(e){ var b=e.target.closest("[data-cat]"); if(!b)return; activeCat=b.getAttribute("data-cat"); renderFilters(); renderCatalog(); });
+  el("catalog").addEventListener("click", function(e){ var b=e.target.closest("[data-toggle]"); if(b) toggleCart(b.getAttribute("data-toggle")); });
+  el("btnViewCart").addEventListener("click", function(){ renderCartModal(); open("cartOverlay"); });
+  el("btnSendWa").addEventListener("click", sendWhatsApp);
+  el("btnSendWa2").addEventListener("click", sendWhatsApp);
+  el("cartList").addEventListener("click", function(e){ var b=e.target.closest("[data-remove]"); if(b){ toggleCart(b.getAttribute("data-remove")); if(!cart.length) close("cartOverlay"); } });
 
-  document.getElementById("adminLink").addEventListener("click", function(){
-    if (isAdmin){ renderAdminList(); fillSettingsForm(); updateRepoBanner(); open("adminOverlay"); }
-    else {
-      document.getElementById("loginUser").value = "";
-      document.getElementById("loginPass").value = "";
-      open("loginOverlay"); document.getElementById("loginUser").focus();
-    }
+  el("adminLink").addEventListener("click", function(){
+    if(isAdmin){ renderAdminList(); fillSettingsForm(); resetForm(); open("adminOverlay"); }
+    else { el("loginEmail").value=""; el("loginPass").value=""; open("loginOverlay"); el("loginEmail").focus(); }
   });
-  function tryLogin(){
-    var u = document.getElementById("loginUser").value.trim();
-    var p = document.getElementById("loginPass").value;
-    if (u === (data.settings.user || "admin") && p === (data.settings.pass || "1234")){
-      isAdmin = true; close("loginOverlay");
-      renderAdminList(); fillSettingsForm(); resetProductForm(); updateRepoBanner(); open("adminOverlay");
-    } else { toast("Usuario o contraseña incorrectos."); }
-  }
-  document.getElementById("btnLogin").addEventListener("click", tryLogin);
-  document.getElementById("loginPass").addEventListener("keydown", function(e){ if (e.key === "Enter") tryLogin(); });
+  el("btnLogin").addEventListener("click", login);
+  el("loginPass").addEventListener("keydown", function(e){ if(e.key==="Enter") login(); });
+  el("btnLogout").addEventListener("click", logout);
 
-  document.getElementById("btnConnectRepo").addEventListener("click", connectRepo);
-  document.getElementById("pImg").addEventListener("change", function(e){ handleImageFile(e.target.files[0]); });
-  document.getElementById("pCatSel").addEventListener("change", toggleNewCatInput);
-  document.getElementById("btnSaveProduct").addEventListener("click", saveProduct);
-  document.getElementById("btnCancelEdit").addEventListener("click", resetProductForm);
-
-  document.getElementById("adminList").addEventListener("click", function(e){
+  el("pImg").addEventListener("change", function(e){
+    var f=e.target.files[0]; if(!f) return;
+    compress(f).then(function(res){ pending=res; var pv=el("pPreview"); pv.src=res.dataURL; pv.style.display="block"; })
+      .catch(function(){ toast("No se pudo leer la imagen."); });
+  });
+  el("pCatSel").addEventListener("change", toggleNewCat);
+  el("btnSaveProduct").addEventListener("click", saveProduct);
+  el("btnCancelEdit").addEventListener("click", resetForm);
+  el("adminList").addEventListener("click", function(e){
     var b;
-    if ((b = e.target.closest("[data-edit]"))) startEdit(b.getAttribute("data-edit"));
-    else if ((b = e.target.closest("[data-del]"))){
-      var id = b.getAttribute("data-del");
-      var p = data.products.find(function(x){ return x.id === id; });
-      if (p && confirm('¿Eliminar "' + p.name + '"?')){
-        if (!repoHandle){ toast("Conectá la carpeta del repo para guardar los cambios."); return; }
-        deleteImage(p.img).then(function(){
-          data.products = data.products.filter(function(x){ return x.id !== id; });
-          cart = cart.filter(function(c){ return c !== id; });
-          return writeDataFile();
-        }).then(function(){ renderAll(); toast("Producto eliminado y guardado."); });
-      }
-    }
-    else if ((b = e.target.closest("[data-sold]"))){
-      if (!repoHandle){ toast("Conectá la carpeta del repo para guardar los cambios."); return; }
-      var p2 = data.products.find(function(x){ return x.id === b.getAttribute("data-sold"); });
-      if (p2){ p2.sold = !p2.sold; cart = cart.filter(function(c){ return c !== p2.id; });
-        writeDataFile().then(function(){ renderAll(); toast("Guardado."); }); }
-    }
+    if((b=e.target.closest("[data-edit]"))) startEdit(b.getAttribute("data-edit"));
+    else if((b=e.target.closest("[data-del]"))) delProduct(b.getAttribute("data-del"));
+    else if((b=e.target.closest("[data-sold]"))) toggleSold(b.getAttribute("data-sold"));
   });
+  el("btnSaveCfg").addEventListener("click", saveConfig);
 
-  document.getElementById("btnSaveCfg").addEventListener("click", function(){
-    if (!repoHandle){ toast("Conectá la carpeta del repo para guardar los cambios."); return; }
-    data.settings.wa = document.getElementById("cfgWa").value.replace(/\D/g,"");
-    data.settings.title = document.getElementById("cfgTitle").value.trim() || "Venta de Garaje";
-    data.settings.subtitle = document.getElementById("cfgSubtitle").value.trim();
-    var u = document.getElementById("cfgUser").value.trim();
-    var p = document.getElementById("cfgPass").value;
-    if (u) data.settings.user = u;
-    if (p) data.settings.pass = p;
-    writeDataFile().then(function(){ renderHeader(); toast("Configuración guardada."); });
-  });
+  document.querySelectorAll(".overlay").forEach(function(ov){ ov.addEventListener("click", function(e){ if(e.target===ov||e.target.closest("[data-close]")) ov.classList.remove("open"); }); });
+  document.addEventListener("keydown", function(e){ if(e.key==="Escape") document.querySelectorAll(".overlay.open").forEach(function(o){o.classList.remove("open");}); });
 
-  document.getElementById("btnExportJson").addEventListener("click", exportJson);
-  document.getElementById("btnReset").addEventListener("click", function(){
-    if (!confirm("¿Vaciar todos los productos? (las fotos en /img no se borran)")) return;
-    if (!repoHandle){ toast("Conectá la carpeta del repo para guardar los cambios."); return; }
-    data.products = [];
-    writeDataFile().then(function(){ renderAll(); toast("Catálogo vaciado y guardado."); });
-  });
-
-  document.querySelectorAll(".overlay").forEach(function(ov){
-    ov.addEventListener("click", function(e){ if (e.target === ov || e.target.closest("[data-close]")) ov.classList.remove("open"); });
-  });
-  document.addEventListener("keydown", function(e){ if (e.key === "Escape") document.querySelectorAll(".overlay.open").forEach(function(o){ o.classList.remove("open"); }); });
-
-  boot();
+  /* ---------- Arranque ---------- */
+  refreshSession().then(loadAll);
 })();
 </script>
 </body>
