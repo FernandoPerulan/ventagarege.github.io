@@ -40,6 +40,8 @@
     text-shadow:2px 2px 0 rgba(0,0,0,.25); letter-spacing:1px; line-height:1.1; }
   .sign p{ margin-top:8px; font-family:var(--display); font-size:clamp(1rem, 3vw, 1.3rem); color:var(--tape); }
   .hint{ text-align:center; color:var(--ink-soft); font-size:.95rem; padding:8px 20px 4px; font-weight:600; }
+  .pdf-bar{ display:flex; justify-content:center; padding:2px 18px 4px; }
+  .btn-pdf{ display:flex; align-items:center; gap:8px; }
 
   .filters{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:1100px; margin:14px auto 0; padding:0 18px; }
   .chip{ font-family:var(--body); font-weight:800; font-size:.92rem; border:2px solid var(--ink); border-radius:999px;
@@ -117,16 +119,19 @@
     background:none; border:none; font-size:.85rem; cursor:pointer; text-decoration:underline; font-family:var(--body); }
   .admin-grid{ display:grid; grid-template-columns:1fr; gap:22px; }
   @media(min-width:660px){ .admin-grid{ grid-template-columns:1fr 1fr; } }
-  .admin-section{ border:2px dashed var(--kraft-dark); border-radius:8px; padding:14px; }
+  .admin-section{ border:2px dashed var(--kraft-dark); border-radius:8px; padding:14px; min-width:0; }
   .admin-section h3{ font-family:var(--display); font-size:1.15rem; margin-bottom:10px; }
   .admin-list{ list-style:none; max-height:340px; overflow-y:auto; }
-  .admin-list li{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed var(--kraft-dark); }
-  .admin-list img{ width:46px; height:46px; object-fit:cover; border-radius:4px; background:#EDE6D6; }
+  .admin-list li{ display:flex; flex-direction:column; gap:8px; padding:10px 0; border-bottom:1px dashed var(--kraft-dark); }
+  .admin-list .row-top{ display:flex; align-items:center; gap:10px; min-width:0; }
+  .admin-list img{ width:46px; height:46px; object-fit:cover; border-radius:4px; background:#EDE6D6; flex-shrink:0; }
   .admin-list .thumb-empty{ width:46px; height:46px; border-radius:4px; background:#EDE6D6; flex-shrink:0; }
   .admin-list .info{ flex:1; min-width:0; }
   .admin-list .info b{ display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .admin-list .info small{ color:var(--ink-soft); }
+  .admin-list .row-actions{ display:flex; gap:6px; justify-content:flex-end; }
   .icon-btn{ background:none; border:none; cursor:pointer; font-size:1.05rem; padding:4px; }
+  .icon-btn[disabled]{ opacity:.5; cursor:default; }
   .preview-img{ margin-top:8px; max-width:140px; border-radius:6px; display:none; }
   .toast{ position:fixed; top:16px; left:50%; transform:translateX(-50%); background:var(--ink); color:#FFF7E6;
     padding:10px 20px; border-radius:8px; font-weight:700; z-index:80; display:none; box-shadow:var(--shadow); max-width:92vw; text-align:center; }
@@ -146,6 +151,10 @@
 </header>
 
 <p class="hint">Tocá <b>“Me interesa”</b> en los productos que quieras y mandanos la lista por WhatsApp.</p>
+
+<div class="pdf-bar">
+  <button class="btn btn-dark btn-pdf" id="btnDownloadPdf" type="button">📄 Descargar catálogo en PDF</button>
+</div>
 
 <nav class="filters" id="filters" aria-label="Filtrar por categoría"></nav>
 
@@ -255,6 +264,7 @@
 <div class="toast" id="toast" role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script>
 (function(){
   "use strict";
@@ -374,10 +384,13 @@
     if(!productos.length){ list.innerHTML='<li style="border:none;color:var(--ink-soft)">Sin productos todavía.</li>'; return; }
     list.innerHTML = productos.map(function(p){
       var thumb = p.img ? '<img src="'+esc(p.img)+'" alt="">' : '<span class="thumb-empty"></span>';
-      return '<li>'+thumb+'<span class="info"><b>'+esc(p.nombre)+'</b><small>'+money(p.precio)+' · '+esc(catOf(p))+(p.sold?" · VENDIDO":"")+'</small></span>'+
+      return '<li><div class="row-top">'+thumb+'<span class="info"><b>'+esc(p.nombre)+'</b><small>'+money(p.precio)+' · '+esc(catOf(p))+(p.sold?" · VENDIDO":"")+'</small></span></div>'+
+        '<div class="row-actions">'+
+        '<button class="icon-btn" data-story="'+p.id+'" title="Generar imagen para Estados de WhatsApp">📸</button>'+
         '<button class="icon-btn" data-sold="'+p.id+'" title="Vendido / disponible">'+(p.sold?"↩️":"🏷️")+'</button>'+
         '<button class="icon-btn" data-edit="'+p.id+'" title="Editar">✏️</button>'+
-        '<button class="icon-btn" data-del="'+p.id+'" title="Eliminar">🗑️</button></li>';
+        '<button class="icon-btn" data-del="'+p.id+'" title="Eliminar">🗑️</button>'+
+        '</div></li>';
     }).join("");
   }
   function fillSettingsForm(){
@@ -526,6 +539,400 @@
     if(isAdmin){ renderAdminList(); fillSettingsForm(); renderCatOptions(); }
   }
 
+  /* ---------- Catálogo en PDF ---------- */
+  function loadImageAsDataURL(url){
+    return fetch(url).then(function(r){
+      if(!r.ok) throw new Error("No se pudo descargar la imagen");
+      return r.blob();
+    }).then(function(blob){
+      return new Promise(function(resolve, reject){
+        var reader = new FileReader();
+        reader.onload = function(){
+          var img = new Image();
+          img.onload = function(){ resolve({ dataURL: reader.result, w: img.naturalWidth, h: img.naturalHeight }); };
+          img.onerror = function(){ reject(new Error("Imagen inválida")); };
+          img.src = reader.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    });
+  }
+  function pdfImageFormat(dataURL){ return dataURL.indexOf("data:image/png")===0 ? "PNG" : "JPEG"; }
+
+  function drawPdfFooter(doc, pageW, pageH, margin){
+    if(!settings.wa) return;
+    var w=100, h=11, x=(pageW-w)/2, y=pageH-margin-h;
+    doc.setFillColor(31,175,84);
+    doc.roundedRect(x, y, w, h, 2, 2, "F");
+    doc.setTextColor(255,255,255);
+    doc.setFont("helvetica","bold"); doc.setFontSize(11.5);
+    doc.text("Escribinos por WhatsApp", x+w/2, y+h/2, { align:"center", baseline:"middle" });
+    var msg = "¡Hola! Vi el catálogo de la "+(settings.title||"venta de garaje")+" y quiero consultar por algunos productos.";
+    doc.link(x, y, w, h, { url: "https://wa.me/"+settings.wa.replace(/\D/g,"")+"?text="+encodeURIComponent(msg) });
+  }
+
+  function drawPdfPageHeader(doc, pageW, margin, first){
+    if(first){
+      doc.setTextColor(42,33,24);
+      doc.setFont("helvetica","bold"); doc.setFontSize(24);
+      doc.text(settings.title||"Venta de Garaje", pageW/2, margin+4, { align:"center" });
+      if(settings.subtitle){
+        doc.setFont("helvetica","normal"); doc.setFontSize(12.5);
+        doc.setTextColor(110,95,75);
+        doc.text(settings.subtitle, pageW/2, margin+11, { align:"center" });
+      }
+      doc.setDrawColor(201,174,127); doc.setLineWidth(0.6);
+      doc.line(margin, margin+16, pageW-margin, margin+16);
+      return margin+22;
+    }
+    doc.setFont("helvetica","bold"); doc.setFontSize(10.5);
+    doc.setTextColor(110,95,75);
+    doc.text(settings.title||"Venta de Garaje", margin, margin);
+    doc.setDrawColor(201,174,127); doc.setLineWidth(0.4);
+    doc.line(margin, margin+2.5, pageW-margin, margin+2.5);
+    return margin+9;
+  }
+
+  function drawPdfCategoryHeader(doc, text, x, y, w){
+    doc.setFont("helvetica","bold"); doc.setFontSize(13);
+    doc.setTextColor(199,54,31);
+    doc.text(text, x, y);
+    doc.setDrawColor(199,54,31); doc.setLineWidth(0.4);
+    doc.line(x, y+1.6, x+w, y+1.6);
+  }
+
+  function drawPdfCard(doc, p, x, y, w, h, imgData){
+    doc.setDrawColor(201,174,127); doc.setLineWidth(0.3);
+    doc.roundedRect(x, y, w, h, 2, 2, "S");
+
+    var pad=3, imgW=40, imgH=h-2*pad, imgX=x+pad, imgY=y+pad;
+    if(imgData){
+      var scale=Math.min(imgW/imgData.w, imgH/imgData.h);
+      var dw=imgData.w*scale, dh=imgData.h*scale;
+      doc.addImage(imgData.dataURL, pdfImageFormat(imgData.dataURL), imgX+(imgW-dw)/2, imgY+(imgH-dh)/2, dw, dh);
+    } else {
+      doc.setFillColor(237,230,214);
+      doc.rect(imgX, imgY, imgW, imgH, "F");
+      doc.setTextColor(110,95,75); doc.setFont("helvetica","normal"); doc.setFontSize(9);
+      doc.text("Sin foto", imgX+imgW/2, imgY+imgH/2, { align:"center", baseline:"middle" });
+    }
+
+    var tx=imgX+imgW+5, rightEdge=x+w-pad, tw=rightEdge-tx, nameW=tw-30;
+    var ty=y+pad+4;
+
+    doc.setFont("helvetica","bold"); doc.setFontSize(12.5);
+    doc.setTextColor.apply(doc, p.sold?[150,140,130]:[42,33,24]);
+    var nameLines = doc.splitTextToSize(p.nombre||"", nameW).slice(0,2);
+    doc.text(nameLines, tx, ty, { lineHeightFactor:1.15 });
+
+    doc.setFont("helvetica","bold"); doc.setFontSize(12.5);
+    doc.setTextColor(199,54,31);
+    doc.text(money(p.precio), rightEdge, y+pad+4, { align:"right" });
+
+    ty += nameLines.length>1 ? 10.5 : 6;
+    var cat = catOf(p);
+    if(cat){
+      doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
+      doc.setTextColor(110,95,75);
+      doc.text(cat.toUpperCase(), tx, ty);
+      ty += 4.5;
+    }
+    if(p.sold){
+      doc.setFont("helvetica","bold"); doc.setFontSize(9);
+      doc.setTextColor(199,54,31);
+      doc.text("VENDIDO", tx, ty);
+      ty += 4.5;
+    }
+
+    doc.setFont("helvetica","normal"); doc.setFontSize(9.5);
+    doc.setTextColor(80,70,58);
+    var descLines = doc.splitTextToSize(p.descripcion||"", tw);
+    var maxLines = Math.max(1, Math.floor((y+h-pad-ty)/4.2));
+    doc.text(descLines.slice(0, maxLines), tx, ty, { lineHeightFactor:1.25 });
+  }
+
+  function generateCatalogPdf(){
+    if(!productos.length){ toast("Todavía no hay productos para el catálogo."); return; }
+    if(!window.jspdf){ toast("No se pudo cargar el generador de PDF. Revisá tu conexión."); return; }
+
+    var btn=el("btnDownloadPdf");
+    var origText=btn.textContent; btn.disabled=true; btn.textContent="Generando PDF…";
+
+    var urls = [];
+    productos.forEach(function(p){ if(p.img && urls.indexOf(p.img)===-1) urls.push(p.img); });
+    var imgMap = {};
+
+    Promise.all(urls.map(function(u){
+      return loadImageAsDataURL(u).then(function(d){ imgMap[u]=d; }).catch(function(){ imgMap[u]=null; });
+    })).then(function(){
+      var jsPDF = window.jspdf.jsPDF;
+      var doc = new jsPDF({ unit:"mm", format:"a4" });
+      doc.setProperties({ title:(settings.title||"Catálogo")+" - Catálogo" });
+
+      var pageW=210, pageH=297, margin=14, cardH=48, gap=5;
+      var footerReserve = settings.wa ? 20 : 6;
+      var contentBottom = pageH - margin - footerReserve;
+
+      var y = drawPdfPageHeader(doc, pageW, margin, true);
+      drawPdfFooter(doc, pageW, pageH, margin);
+
+      var cats = categories();
+      var groups = cats.length>1
+        ? cats.map(function(c){ return { name:c.name, items:productos.filter(function(p){return catOf(p)===c.name;}) }; })
+        : [{ name:null, items:productos.slice() }];
+
+      groups.forEach(function(g){
+        if(g.name){
+          if(y+16>contentBottom){ doc.addPage(); y=drawPdfPageHeader(doc,pageW,margin,false); drawPdfFooter(doc,pageW,pageH,margin); }
+          drawPdfCategoryHeader(doc, g.name, margin, y+4, pageW-2*margin);
+          y += 10;
+        }
+        g.items.forEach(function(p){
+          if(y+cardH>contentBottom){
+            doc.addPage();
+            y = drawPdfPageHeader(doc, pageW, margin, false);
+            drawPdfFooter(doc, pageW, pageH, margin);
+          }
+          drawPdfCard(doc, p, margin, y, pageW-2*margin, cardH, p.img?imgMap[p.img]:null);
+          y += cardH+gap;
+        });
+      });
+
+      var fname = "catalogo-"+(settings.title||"venta-de-garaje").toLowerCase()
+        .replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+      doc.save((fname||"catalogo")+".pdf");
+    }).catch(function(err){
+      console.error(err); toast("No se pudo generar el PDF.");
+    }).then(function(){
+      btn.disabled=false; btn.textContent=origText;
+    });
+  }
+
+  /* ---------- Imagen de producto para Estados de WhatsApp ---------- */
+  var STORY_MARKER_FONT = "'Permanent Marker', cursive";
+  var STORY_BODY_FONT = "'Nunito', sans-serif";
+  var storyFontsReady = null;
+  function ensureStoryFonts(){
+    if (storyFontsReady) return storyFontsReady;
+    if (!window.document.fonts || !document.fonts.load){ storyFontsReady = Promise.resolve(); return storyFontsReady; }
+    storyFontsReady = Promise.all([
+      document.fonts.load('700 72px '+STORY_MARKER_FONT),
+      document.fonts.load('600 36px '+STORY_BODY_FONT),
+      document.fonts.load('700 40px '+STORY_BODY_FONT),
+      document.fonts.load('800 56px '+STORY_BODY_FONT)
+    ]).catch(function(){}).then(function(){});
+    return storyFontsReady;
+  }
+  function loadImageEl(src){
+    return new Promise(function(resolve, reject){
+      var img = new Image();
+      img.onload = function(){ resolve(img); };
+      img.onerror = function(){ reject(new Error("Imagen inválida")); };
+      img.src = src;
+    });
+  }
+  function roundRectPath(ctx, x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+  }
+  function wrapCanvasText(ctx, text, maxWidth){
+    var words = String(text||"").trim().split(/\s+/).filter(Boolean);
+    var lines = [], cur = "";
+    words.forEach(function(w){
+      var test = cur ? cur+" "+w : w;
+      if (ctx.measureText(test).width > maxWidth && cur){ lines.push(cur); cur = w; }
+      else cur = test;
+    });
+    if (cur) lines.push(cur);
+    return lines;
+  }
+  function truncateLines(ctx, lines, maxLines, maxWidth){
+    if (lines.length<=maxLines) return lines;
+    var out = lines.slice(0, maxLines);
+    var last = out[maxLines-1]+"…";
+    while (ctx.measureText(last).width>maxWidth && last.length>1){ last = last.slice(0,-2)+"…"; }
+    out[maxLines-1] = last;
+    return out;
+  }
+  function drawStoryPriceTag(ctx, text, cx, cy){
+    ctx.save();
+    ctx.font = "800 46px "+STORY_BODY_FONT;
+    var padX=30, padY=18, h=46+padY, w=ctx.measureText(text).width+padX*2;
+    ctx.translate(cx, cy);
+    ctx.rotate(6*Math.PI/180);
+    ctx.shadowColor="rgba(0,0,0,.3)"; ctx.shadowBlur=12; ctx.shadowOffsetY=4;
+    ctx.fillStyle="#C7361F";
+    roundRectPath(ctx, -w/2, -h/2, w, h, 8); ctx.fill();
+    ctx.shadowColor="transparent";
+    ctx.fillStyle="#FFF7E6";
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText(text, 0, 3);
+    ctx.restore();
+  }
+  function drawProductStoryCanvas(p, img){
+    var W=1080, H=1920;
+    var canvas=document.createElement("canvas"); canvas.width=W; canvas.height=H;
+    var ctx=canvas.getContext("2d");
+
+    ctx.fillStyle="#E7D3AE"; ctx.fillRect(0,0,W,H);
+    var grad=ctx.createRadialGradient(W/2,0,60,W/2,0,W*0.9);
+    grad.addColorStop(0,"rgba(255,255,255,.3)"); grad.addColorStop(1,"rgba(255,255,255,0)");
+    ctx.fillStyle=grad; ctx.fillRect(0,0,W,H*0.55);
+
+    /* ---- cartel con el nombre de la venta (alto según el largo del título) ---- */
+    var signX=56, signW=W-112, signY=64, signPadTop=44, signPadBottom=40, titleLineH=66;
+    ctx.font="700 68px "+STORY_MARKER_FONT;
+    var titleLines = truncateLines(ctx, wrapCanvasText(ctx, settings.title||"Venta de Garaje", signW-100), 2, signW-100);
+    var subtitleGap = settings.subtitle ? 58 : 0;
+    var signH = signPadTop + titleLines.length*titleLineH + subtitleGap + signPadBottom;
+
+    ctx.save(); ctx.shadowColor="rgba(42,33,24,.3)"; ctx.shadowBlur=16; ctx.shadowOffsetY=6;
+    ctx.fillStyle="#B98A54";
+    roundRectPath(ctx, signX, signY, signW, signH, 14); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle="#8A6238"; ctx.lineWidth=5;
+    roundRectPath(ctx, signX, signY, signW, signH, 14); ctx.stroke();
+    [0.14,0.86].forEach(function(fx,i){
+      ctx.save();
+      ctx.translate(signX+signW*fx, signY);
+      ctx.rotate((i===0?-1:1)*6*Math.PI/180);
+      ctx.fillStyle="rgba(245,197,66,.85)";
+      ctx.fillRect(-70,-18,160,42);
+      ctx.restore();
+    });
+    ctx.textAlign="center"; ctx.textBaseline="alphabetic";
+    ctx.fillStyle="#FFF7E6";
+    ctx.shadowColor="rgba(0,0,0,.28)"; ctx.shadowOffsetX=3; ctx.shadowOffsetY=3;
+    var titleBaseY = signY+signPadTop+48;
+    titleLines.forEach(function(line,i){ ctx.fillText(line, W/2, titleBaseY+i*titleLineH); });
+    ctx.shadowOffsetX=0; ctx.shadowOffsetY=0;
+    if (settings.subtitle){
+      ctx.font="700 34px "+STORY_MARKER_FONT;
+      ctx.fillStyle="#F5C542";
+      ctx.fillText(settings.subtitle, W/2, titleBaseY+(titleLines.length-1)*titleLineH+50, signW-120);
+    }
+
+    /* ---- tarjeta de producto: se mide el contenido antes de dibujar para que el alto se ajuste ---- */
+    var cardX=56, cardW=W-112, pad=36;
+    var photoW=cardW-2*pad, photoH=photoW*0.72, contentW=cardW-2*pad;
+
+    ctx.font="800 54px "+STORY_BODY_FONT;
+    var nameLines = truncateLines(ctx, wrapCanvasText(ctx, p.nombre||"", contentW), 2, contentW);
+    var cat = catOf(p);
+    ctx.font="600 36px "+STORY_BODY_FONT;
+    var descAll = wrapCanvasText(ctx, p.descripcion||"", contentW);
+    var descLines = descAll.length>6 ? truncateLines(ctx, descAll, 6, contentW) : descAll;
+
+    var contentH = pad + photoH + 64 + nameLines.length*62 + 16 + (cat?48:0) + 8 + descLines.length*48 + pad;
+    var footYFixed = H-190;
+    var zoneTop = signY+signH+30, zoneBottom = footYFixed-30;
+    var cardY = zoneTop + Math.max(0, (zoneBottom-zoneTop-contentH)/2);
+    var cardH = contentH;
+
+    ctx.save(); ctx.shadowColor="rgba(42,33,24,.28)"; ctx.shadowBlur=24; ctx.shadowOffsetY=10;
+    ctx.fillStyle="#FFFDF6";
+    roundRectPath(ctx, cardX, cardY, cardW, cardH, 12); ctx.fill();
+    ctx.restore();
+
+    var photoX=cardX+pad, photoY=cardY+pad;
+    if (img){
+      roundRectPath(ctx, photoX, photoY, photoW, photoH, 8);
+      ctx.save(); ctx.clip();
+      var scale=Math.max(photoW/img.width, photoH/img.height);
+      var dw=img.width*scale, dh=img.height*scale;
+      ctx.drawImage(img, photoX+(photoW-dw)/2, photoY+(photoH-dh)/2, dw, dh);
+      if (p.sold){ ctx.fillStyle="rgba(255,253,246,.55)"; ctx.fillRect(photoX, photoY, photoW, photoH); }
+      ctx.restore();
+    } else {
+      ctx.fillStyle="#EDE6D6";
+      roundRectPath(ctx, photoX, photoY, photoW, photoH, 8); ctx.fill();
+      ctx.fillStyle="#6E5F4B"; ctx.font="700 38px "+STORY_MARKER_FONT;
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.fillText("sin foto", photoX+photoW/2, photoY+photoH/2);
+    }
+    if (p.sold){
+      ctx.save();
+      ctx.translate(photoX+photoW/2, photoY+photoH/2);
+      ctx.rotate(-10*Math.PI/180);
+      ctx.font="800 58px "+STORY_BODY_FONT;
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      var stampW=ctx.measureText("VENDIDO").width+70;
+      ctx.strokeStyle="#C7361F"; ctx.lineWidth=6;
+      roundRectPath(ctx, -stampW/2, -50, stampW, 100, 10); ctx.stroke();
+      ctx.fillStyle="#C7361F";
+      ctx.fillText("VENDIDO", 0, 4);
+      ctx.restore();
+    }
+    drawStoryPriceTag(ctx, money(p.precio), photoX+photoW-30, photoY+18);
+
+    var contentX=cardX+pad, cy=photoY+photoH+64;
+    ctx.textAlign="left"; ctx.textBaseline="alphabetic";
+    ctx.font="800 54px "+STORY_BODY_FONT;
+    ctx.fillStyle = p.sold?"#9C8C82":"#2A2118";
+    nameLines.forEach(function(line,i){ ctx.fillText(line, contentX, cy+i*62); });
+    cy += nameLines.length*62+16;
+
+    if (cat){
+      ctx.font="700 30px "+STORY_BODY_FONT;
+      ctx.fillStyle="#6E5F4B";
+      ctx.fillText(cat.toUpperCase(), contentX, cy);
+      cy += 48;
+    }
+
+    cy += 8;
+    ctx.font="600 36px "+STORY_BODY_FONT;
+    ctx.fillStyle="#50463A";
+    descLines.forEach(function(line,i){ ctx.fillText(line, contentX, cy+i*48); });
+
+    /* ---- pie con el número de contacto ---- */
+    var footX=56, footW=W-112, footH=136, footY=footYFixed;
+    ctx.save(); ctx.shadowColor="rgba(0,0,0,.25)"; ctx.shadowBlur=16; ctx.shadowOffsetY=6;
+    ctx.fillStyle="#1FAF54";
+    roundRectPath(ctx, footX, footY, footW, footH, 22); ctx.fill();
+    ctx.restore();
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillStyle="#fff";
+    ctx.font="800 38px "+STORY_BODY_FONT;
+    ctx.fillText("📱 Escribinos por WhatsApp", W/2, footY+48);
+    ctx.font="700 36px "+STORY_BODY_FONT;
+    ctx.fillText("+"+String(settings.wa||"").replace(/\D/g,""), W/2, footY+96);
+
+    return canvas;
+  }
+  function downloadCanvasAsPng(canvas, filename){
+    canvas.toBlob(function(blob){
+      if(!blob) return;
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement("a");
+      a.href=url; a.download=filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    }, "image/png", 0.95);
+  }
+  function generateProductStory(id){
+    var p=productos.find(function(x){return x.id===id;}); if(!p) return;
+    if(!settings.wa){ toast("Configurá el número de WhatsApp en Configuración antes de generar la imagen."); return; }
+    var btn=document.querySelector('[data-story="'+id+'"]');
+    if(btn) btn.disabled=true;
+    ensureStoryFonts().then(function(){
+      return p.img ? loadImageAsDataURL(p.img).then(function(d){ return loadImageEl(d.dataURL); }).catch(function(){ return null; }) : Promise.resolve(null);
+    }).then(function(img){
+      var canvas = drawProductStoryCanvas(p, img);
+      var fname = "estado-"+String(p.nombre||"producto").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+      downloadCanvasAsPng(canvas, (fname||"estado")+".png");
+    }).catch(function(err){
+      console.error(err); toast("No se pudo generar la imagen.");
+    }).then(function(){
+      if(btn) btn.disabled=false;
+    });
+  }
+
   /* ---------- Eventos ---------- */
   el("filters").addEventListener("click", function(e){ var b=e.target.closest("[data-cat]"); if(!b)return; activeCat=b.getAttribute("data-cat"); renderFilters(); renderCatalog(); });
   el("catalog").addEventListener("click", function(e){ var b=e.target.closest("[data-toggle]"); if(b) toggleCart(b.getAttribute("data-toggle")); });
@@ -555,8 +962,10 @@
     if((b=e.target.closest("[data-edit]"))) startEdit(b.getAttribute("data-edit"));
     else if((b=e.target.closest("[data-del]"))) delProduct(b.getAttribute("data-del"));
     else if((b=e.target.closest("[data-sold]"))) toggleSold(b.getAttribute("data-sold"));
+    else if((b=e.target.closest("[data-story]"))) generateProductStory(b.getAttribute("data-story"));
   });
   el("btnSaveCfg").addEventListener("click", saveConfig);
+  el("btnDownloadPdf").addEventListener("click", generateCatalogPdf);
 
   document.querySelectorAll(".overlay").forEach(function(ov){ ov.addEventListener("click", function(e){ if(e.target===ov||e.target.closest("[data-close]")) ov.classList.remove("open"); }); });
   document.addEventListener("keydown", function(e){ if(e.key==="Escape") document.querySelectorAll(".overlay.open").forEach(function(o){o.classList.remove("open");}); });
